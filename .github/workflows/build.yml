@@ -32,15 +32,26 @@ jobs:
         with:
           packages: 'platform-tools platforms;android-34 build-tools;34.0.0'
 
-      - name: Make gradlew executable
-        run: chmod +x ./gradlew
+      - name: Set up Gradle 8.7
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '8.7'
+
+      # The repo may or may not contain gradle-wrapper.jar (some hosts strip
+      # *.jar files). Regenerate the wrapper using the system Gradle 8.7 so
+      # `./gradlew` always works on CI.
+      - name: Bootstrap Gradle wrapper
+        run: |
+          gradle wrapper --gradle-version 8.7 --distribution-type bin
+          chmod +x ./gradlew
+          ls -la gradle/wrapper/
+          ./gradlew --version | head -5
 
       - name: Print environment
         run: |
           echo "JAVA_HOME=$JAVA_HOME"
           echo "ANDROID_HOME=$ANDROID_HOME"
           java -version
-          ./gradlew --version | head -10
           echo "--- Project files ---"
           ls -la
           echo "--- Source tree ---"
