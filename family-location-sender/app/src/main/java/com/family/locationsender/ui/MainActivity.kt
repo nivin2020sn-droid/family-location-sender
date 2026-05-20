@@ -58,7 +58,8 @@ class MainActivity : AppCompatActivity() {
             val status = intent.getIntExtra(LocationForegroundService.EXTRA_HTTP_STATUS, 0)
             val body = intent.getStringExtra(LocationForegroundService.EXTRA_BODY) ?: ""
             val err = intent.getStringExtra(LocationForegroundService.EXTRA_ERROR) ?: ""
-            showTestResultDialog(status, body, err)
+            val payload = intent.getStringExtra(LocationForegroundService.EXTRA_PAYLOAD) ?: ""
+            showTestResultDialog(status, body, err, payload)
             renderStatus()
         }
     }
@@ -361,7 +362,12 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun showTestResultDialog(httpStatus: Int, body: String, error: String) {
+    private fun showTestResultDialog(
+        httpStatus: Int,
+        body: String,
+        error: String,
+        sentPayload: String = ""
+    ) {
         val ok = httpStatus in 200..299
         val titleRes = if (ok) R.string.test_result_success_title else R.string.test_result_fail_title
         val statusLabel = if (httpStatus == 0) "—" else httpStatus.toString()
@@ -370,13 +376,23 @@ class MainActivity : AppCompatActivity() {
             if (error.isNotBlank()) {
                 append("Error:\n").append(error).append("\n\n")
             }
-            if (body.isNotBlank()) {
-                append("Response body:\n")
+            append("Response body:\n")
+            if (body.isBlank()) {
+                append("(empty)\n")
+            } else {
                 append(if (body.length > 2000) body.take(2000) + "…" else body)
-            } else if (error.isBlank()) {
-                append("(empty response body)")
+                append("\n")
+            }
+            if (sentPayload.isNotBlank()) {
+                append("\n— Sent payload —\n")
+                append(if (sentPayload.length > 3000) sentPayload.take(3000) + "…" else sentPayload)
             }
         }
+        // Also log everything for offline / adb inspection.
+        Log.i(TAG, "Test Send result: HTTP $statusLabel\n" +
+                (if (error.isNotBlank()) "Error: $error\n" else "") +
+                "Body: $body\n" +
+                "Payload: $sentPayload")
         try {
             AlertDialog.Builder(this)
                 .setTitle(titleRes)

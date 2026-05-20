@@ -15,6 +15,7 @@ import android.net.NetworkRequest
 import android.os.Build
 import android.os.IBinder
 import android.os.Looper
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.family.locationsender.App
@@ -194,11 +195,14 @@ class LocationForegroundService : Service() {
         if (!net.online) {
             queue.enqueue(payload.toJson())
             recordResult(0, "", "Offline — queued for later")
-            if (isTest) broadcastTestResult(0, "", "Offline — queued for later")
+            if (isTest) broadcastTestResult(0, "", "Offline — queued for later", payload.toPrettyJson())
             return
         }
 
-        val result = ApiClient.send(prefs.apiEndpoint, payload)
+        val jsonBody = payload.toJson()
+        Log.i(TAG, "POST ${prefs.apiEndpoint}\nPayload: $jsonBody")
+        val result = ApiClient.sendRaw(prefs.apiEndpoint, jsonBody)
+        Log.i(TAG, "Response: HTTP ${result.httpStatus} body=${result.body} err=${result.errorMessage ?: "-"}")
         recordResult(result.httpStatus, result.body, result.errorMessage)
 
         if (result.success) {
@@ -206,11 +210,11 @@ class LocationForegroundService : Service() {
             prefs.lastSendTimestamp = payload.timestamp
             flushQueue()
         } else {
-            queue.enqueue(payload.toJson())
+            queue.enqueue(jsonBody)
             prefs.incrementFailure()
         }
         if (isTest) {
-            broadcastTestResult(result.httpStatus, result.body, result.errorMessage)
+            broadcastTestResult(result.httpStatus, result.body, result.errorMessage, payload.toPrettyJson())
         }
     }
 
@@ -245,12 +249,18 @@ class LocationForegroundService : Service() {
     }
 
     /** Broadcast Test Send result so MainActivity can pop a dialog. */
-    private fun broadcastTestResult(httpStatus: Int, body: String, errorMessage: String?) {
+    private fun broadcastTestResult(
+        httpStatus: Int,
+        body: String,
+        errorMessage: String?,
+        sentPayload: String = ""
+    ) {
         val intent = Intent(ACTION_TEST_RESULT).apply {
             setPackage(packageName)
             putExtra(EXTRA_HTTP_STATUS, httpStatus)
             putExtra(EXTRA_BODY, body)
             putExtra(EXTRA_ERROR, errorMessage ?: "")
+            putExtra(EXTRA_PAYLOAD, sentPayload)
         }
         sendBroadcast(intent)
     }
@@ -300,6 +310,9 @@ class LocationForegroundService : Service() {
         const val EXTRA_HTTP_STATUS = "http_status"
         const val EXTRA_BODY = "body"
         const val EXTRA_ERROR = "error"
+        const val EXTRA_PAYLOAD = "payload"
+
+        private const val TAG = "FLS-Service"
 
         fun start(ctx: Context) {
             val i = Intent(ctx, LocationForegroundService::class.java).setAction(ACTION_START)
