@@ -326,10 +326,4 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 }
-.setData(Uri.parse("package:$packageName"))
-                startActivity(i)
-            }
-            .setNegativeButton(R.string.cancel, null)
-            .show()
-    }
-}
+
