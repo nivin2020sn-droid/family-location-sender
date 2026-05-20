@@ -12,6 +12,7 @@ jobs:
     name: Build APK
     runs-on: ubuntu-latest
 
+    # Android project lives in a sub-folder.
     defaults:
       run:
         working-directory: family-location-sender
@@ -35,72 +36,61 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
         with:
           gradle-version: '8.7'
-          cache-disabled: true
 
-      - name: Show environment
+      - name: Print environment
         run: |
           echo "JAVA_HOME=$JAVA_HOME"
           echo "ANDROID_HOME=$ANDROID_HOME"
           java -version
-          gradle --version
+          gradle --version | head -5
+          echo "--- Project files ---"
           ls -la
-
-      - name: Generate Gradle wrapper
-        run: |
-          gradle wrapper --gradle-version 8.7 --distribution-type bin
-          chmod +x ./gradlew
-          ls -la gradlew
-
-      - name: Clean previous outputs
-        run: ./gradlew clean --no-daemon
+          echo "--- Source tree ---"
+          find app/src -type d | head -30
 
       - name: Build debug APK
-        run: ./gradlew :app:assembleDebug --no-daemon --stacktrace --warning-mode=all
+        run: gradle :app:assembleDebug --no-daemon --stacktrace --warning-mode=all
 
       - name: Build release APK (unsigned)
-        run: ./gradlew :app:assembleRelease --no-daemon --stacktrace --warning-mode=all
+        run: gradle :app:assembleRelease --no-daemon --stacktrace --warning-mode=all
         continue-on-error: true
 
-      - name: List ALL build outputs (debug)
+      - name: List ALL generated APKs
         if: always()
         run: |
-          echo "=========== Directory tree under app/build/ ==========="
-          find app/build -type d 2>/dev/null | head -50
+          echo "=========== Searching for APKs under app/build/ ==========="
+          find app/build -name "*.apk" -type f 2>/dev/null || true
           echo ""
-          echo "=========== ALL .apk files in the workspace ==========="
-          find . -name "*.apk" -type f 2>/dev/null
+          echo "=========== Searching for APKs anywhere in project ==========="
+          find . -name "*.apk" -type f 2>/dev/null || true
           echo ""
-          echo "=========== Contents of app/build/outputs (if any) ==========="
-          if [ -d app/build/outputs ]; then
-            find app/build/outputs -type f 2>/dev/null
-          else
-            echo "  (app/build/outputs does not exist)"
-          fi
+          echo "=========== Contents of app/build/outputs ==========="
+          ls -laR app/build/outputs 2>/dev/null || echo "  (no outputs dir)"
 
-      - name: Copy APKs to a flat folder
+      - name: Stage APKs for upload
         if: always()
         run: |
-          mkdir -p artifacts
-          # Copy every APK we can find under the project to a single folder
-          find . -name "*.apk" -type f -exec cp -v {} artifacts/ \; 2>/dev/null || true
-          echo ""
-          echo "=========== Files staged for upload ==========="
-          ls -la artifacts/ || true
+          mkdir -p staged-apks
+          if [ -d app/build/outputs/apk ]; then
+            find app/build/outputs/apk -name "*.apk" -type f -exec cp -v {} staged-apks/ \;
+          fi
+          echo "--- Final staged files ---"
+          ls -la staged-apks/ || true
 
       - name: Upload Family-Location-Sender-APK
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: Family-Location-Sender-APK
-          path: family-location-sender/artifacts/*.apk
+          path: family-location-sender/staged-apks/*.apk
           if-no-files-found: warn
           retention-days: 30
 
-      - name: Upload full build/outputs as a backup
+      - name: Upload entire build outputs (for debugging if APK missing)
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: full-build-outputs
+          name: build-outputs-full
           path: family-location-sender/app/build/outputs/
           if-no-files-found: ignore
           retention-days: 14
