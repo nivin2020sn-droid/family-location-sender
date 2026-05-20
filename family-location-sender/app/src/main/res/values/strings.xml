@@ -16,7 +16,7 @@
     <string name="full_name">Full name</string>
     <string name="family_code">Family code</string>
     <string name="api_endpoint">API endpoint</string>
-    <string name="api_endpoint_helper">Example: https://example.com/api/location/update</string>
+    <string name="api_endpoint_helper">Default: https://my-family-my-life-api.onrender.com/api/location/update</string>
     <string name="new_password_optional">New password (optional)</string>
     <string name="save_settings">Save</string>
     <string name="saved">Settings saved</string>

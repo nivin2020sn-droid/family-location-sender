@@ -16,7 +16,7 @@
     <string name="full_name">الاسم الكامل</string>
     <string name="family_code">رمز العائلة</string>
     <string name="api_endpoint">رابط الـ API</string>
-    <string name="api_endpoint_helper">مثال: https://example.com/api/location/update</string>
+    <string name="api_endpoint_helper">الافتراضي: https://my-family-my-life-api.onrender.com/api/location/update</string>
     <string name="new_password_optional">كلمة مرور جديدة (اختياري)</string>
     <string name="save_settings">حفظ</string>
     <string name="saved">تم حفظ الإعدادات</string>

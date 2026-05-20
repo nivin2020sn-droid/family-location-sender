@@ -73,7 +73,7 @@ class Prefs(context: Context) {
         set(v) = sp.edit().putString(KEY_UPDATE_INTERVAL, v).apply()
 
     // ---------------- Device ----------------
-    @SuppressLint("HardwareIds")
+    @get:SuppressLint("HardwareIds")
     val deviceId: String
         get() {
             val existing = sp.getString(KEY_DEVICE_ID, null)
@@ -123,6 +123,8 @@ class Prefs(context: Context) {
     }
 
     companion object {
+        const val DEFAULT_API_ENDPOINT =
+            "https://my-family-my-life-api.onrender.com/api/location/update"
         const val DEFAULT_PASSWORD = "1001"
 
         const val INTERVAL_1MIN = "1m"
