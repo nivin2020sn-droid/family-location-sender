@@ -2,8 +2,10 @@ package com.family.locationsender.ui
 
 import android.Manifest
 import android.app.admin.DevicePolicyManager
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -127,6 +129,14 @@ class MainActivity : AppCompatActivity() {
                 startActivity(Intent(this, LockActivity::class.java))
                 finish(); return
             }
+            // Register Test Send broadcast receiver
+            val filter = IntentFilter(LocationForegroundService.ACTION_TEST_RESULT)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                registerReceiver(testResultReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+            } else {
+                @Suppress("UnspecifiedRegisterReceiverFlag")
+                registerReceiver(testResultReceiver, filter)
+            }
             renderStatus()
             handler.removeCallbacks(refreshRunnable)
             handler.postDelayed(refreshRunnable, 5_000)
@@ -138,6 +148,7 @@ class MainActivity : AppCompatActivity() {
     override fun onPause() {
         super.onPause()
         handler.removeCallbacks(refreshRunnable)
+        try { unregisterReceiver(testResultReceiver) } catch (_: Throwable) {}
     }
 
     private fun renderStatus() {
@@ -184,6 +195,15 @@ class MainActivity : AppCompatActivity() {
         binding.tvSuccess.text = getString(R.string.fmt_success, prefs.successCount)
         binding.tvFailure.text = getString(R.string.fmt_failure, prefs.failureCount)
         binding.tvQueue.text = getString(R.string.fmt_queue, queue.size())
+
+        // Diagnostic info on the last send attempt — visible in status panel.
+        val errLine = buildLastErrorLine()
+        if (errLine.isNotBlank()) {
+            binding.tvLastError.visibility = View.VISIBLE
+            binding.tvLastError.text = errLine
+        } else {
+            binding.tvLastError.visibility = View.GONE
+        }
 
         binding.tvServiceStatus.text = getString(
             R.string.fmt_service,
@@ -314,6 +334,45 @@ class MainActivity : AppCompatActivity() {
             }
         } else {
             binding.cardDeviceAdminWarning.visibility = View.GONE
+        }
+    }
+
+    private fun buildLastErrorLine(): String {
+        val status = prefs.lastHttpStatus
+        val err = prefs.lastErrorMessage
+        return when {
+            status == 0 && err.isBlank() -> ""
+            status in 200..299 -> ""
+            status > 0 && err.isBlank() -> "Last: HTTP $status"
+            status > 0 -> "Last: HTTP $status — $err"
+            else -> "Last: $err"
+        }
+    }
+
+    private fun showTestResultDialog(httpStatus: Int, body: String, error: String) {
+        val ok = httpStatus in 200..299
+        val titleRes = if (ok) R.string.test_result_success_title else R.string.test_result_fail_title
+        val statusLabel = if (httpStatus == 0) "—" else httpStatus.toString()
+        val message = buildString {
+            append("HTTP status: ").append(statusLabel).append("\n\n")
+            if (error.isNotBlank()) {
+                append("Error:\n").append(error).append("\n\n")
+            }
+            if (body.isNotBlank()) {
+                append("Response body:\n")
+                append(if (body.length > 2000) body.take(2000) + "…" else body)
+            } else if (error.isBlank()) {
+                append("(empty response body)")
+            }
+        }
+        try {
+            AlertDialog.Builder(this)
+                .setTitle(titleRes)
+                .setMessage(message)
+                .setPositiveButton(R.string.ok, null)
+                .show()
+        } catch (t: Throwable) {
+            Log.e(TAG, "showTestResultDialog failed", t)
         }
     }
 

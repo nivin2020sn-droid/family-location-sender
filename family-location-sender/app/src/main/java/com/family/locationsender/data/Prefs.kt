@@ -120,6 +120,24 @@ class Prefs(context: Context) {
         get() = sp.getLong(KEY_LAST_SEND_TS, 0L)
         set(v) = sp.edit().putLong(KEY_LAST_SEND_TS, v).apply()
 
+    // ---------------- Diagnostic info on last send attempt ----------------
+    var lastHttpStatus: Int
+        get() = sp.getInt(KEY_LAST_HTTP, 0)
+        set(v) = sp.edit().putInt(KEY_LAST_HTTP, v).apply()
+
+    /** Last server response body (truncated) or last exception message. */
+    var lastResponseBody: String
+        get() = sp.getString(KEY_LAST_BODY, "") ?: ""
+        set(v) = sp.edit().putString(KEY_LAST_BODY, v).apply()
+
+    var lastErrorMessage: String
+        get() = sp.getString(KEY_LAST_ERR, "") ?: ""
+        set(v) = sp.edit().putString(KEY_LAST_ERR, v).apply()
+
+    var lastAttemptAt: Long
+        get() = sp.getLong(KEY_LAST_ATTEMPT_TS, 0L)
+        set(v) = sp.edit().putLong(KEY_LAST_ATTEMPT_TS, v).apply()
+
     fun incrementSuccess() {
         sp.edit().putLong(KEY_SUCCESS_COUNT, successCount + 1).apply()
     }
@@ -167,6 +185,10 @@ class Prefs(context: Context) {
         private const val KEY_SUCCESS_COUNT = "success_count"
         private const val KEY_FAILURE_COUNT = "failure_count"
         private const val KEY_LAST_SEND_TS = "last_send_ts"
+        private const val KEY_LAST_HTTP = "last_http"
+        private const val KEY_LAST_BODY = "last_body"
+        private const val KEY_LAST_ERR = "last_err"
+        private const val KEY_LAST_ATTEMPT_TS = "last_attempt_ts"
         private const val KEY_LANGUAGE = "language"
 
         @Volatile private var INSTANCE: Prefs? = null

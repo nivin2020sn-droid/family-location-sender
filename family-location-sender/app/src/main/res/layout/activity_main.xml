@@ -61,6 +61,15 @@
             <TextView android:id="@+id/tvFailure" style="@style/StatusRow" />
             <TextView android:id="@+id/tvQueue" style="@style/StatusRow" />
             <TextView android:id="@+id/tvApi" style="@style/StatusRow" />
+            <TextView
+                android:id="@+id/tvLastError"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="6dp"
+                android:paddingBottom="6dp"
+                android:textColor="@color/status_err"
+                android:textSize="13sp"
+                android:visibility="gone" />
         </LinearLayout>
 
         <!-- Battery optimization warning -->

@@ -72,7 +72,7 @@ class LocationForegroundService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         startInForeground()
         when (intent?.action) {
-            ACTION_TEST_SEND -> scope.launch { sendOnce() }
+            ACTION_TEST_SEND -> scope.launch { sendOnce(isTest = true) }
             ACTION_FLUSH_QUEUE -> scope.launch { flushQueue() }
             ACTION_STOP -> {
                 prefs.trackingEnabled = false
@@ -145,20 +145,31 @@ class LocationForegroundService : Service() {
         callback = null
     }
 
-    private suspend fun sendOnce() {
-        if (!hasLocationPermission()) return
+    private suspend fun sendOnce(isTest: Boolean = false) {
+        if (!hasLocationPermission()) {
+            if (isTest) broadcastTestResult(0, "", "Location permission not granted")
+            return
+        }
         try {
             fused.lastLocation.addOnSuccessListener { loc ->
-                if (loc != null) scope.launch { sendLocation(loc) }
+                if (loc != null) {
+                    scope.launch { sendLocation(loc, isTest) }
+                } else if (isTest) {
+                    scope.launch { broadcastTestResult(0, "", "No last known location yet — wait for first GPS fix") }
+                }
             }
-        } catch (_: SecurityException) {}
+        } catch (_: SecurityException) {
+            if (isTest) broadcastTestResult(0, "", "SecurityException reading last location")
+        }
     }
 
-    private suspend fun sendLocation(loc: Location) {
-        if (prefs.apiEndpoint.isBlank()) return // nothing to send to
+    private suspend fun sendLocation(loc: Location, isTest: Boolean = false) {
+        if (prefs.apiEndpoint.isBlank()) {
+            if (isTest) broadcastTestResult(0, "", "API endpoint is empty — set it in Settings")
+            return
+        }
         if (prefs.familyCode.isBlank() || prefs.memberName.isBlank()) {
-            // Setup not completed yet — do not contact the server with empty
-            // identity, to avoid filling the offline queue with useless rows.
+            if (isTest) broadcastTestResult(0, "", "Family code or member name missing — open Settings")
             return
         }
 
@@ -182,18 +193,24 @@ class LocationForegroundService : Service() {
 
         if (!net.online) {
             queue.enqueue(payload.toJson())
+            recordResult(0, "", "Offline — queued for later")
+            if (isTest) broadcastTestResult(0, "", "Offline — queued for later")
             return
         }
 
-        val ok = ApiClient.send(prefs.apiEndpoint, payload)
-        if (ok) {
+        val result = ApiClient.send(prefs.apiEndpoint, payload)
+        recordResult(result.httpStatus, result.body, result.errorMessage)
+
+        if (result.success) {
             prefs.incrementSuccess()
             prefs.lastSendTimestamp = payload.timestamp
-            // Try to drain anything queued from previous offline periods.
             flushQueue()
         } else {
             queue.enqueue(payload.toJson())
             prefs.incrementFailure()
+        }
+        if (isTest) {
+            broadcastTestResult(result.httpStatus, result.body, result.errorMessage)
         }
     }
 
@@ -208,14 +225,34 @@ class LocationForegroundService : Service() {
 
             var sent = 0
             for (json in items) {
-                val ok = ApiClient.sendRaw(prefs.apiEndpoint, json)
-                if (!ok) break
+                val result = ApiClient.sendRaw(prefs.apiEndpoint, json)
+                recordResult(result.httpStatus, result.body, result.errorMessage)
+                if (!result.success) break
                 sent++
                 prefs.incrementSuccess()
                 prefs.lastSendTimestamp = System.currentTimeMillis()
             }
             if (sent > 0) queue.removeFirst(sent)
         }
+    }
+
+    /** Persist the most recent attempt's diagnostic info so the UI can show it. */
+    private fun recordResult(httpStatus: Int, body: String, errorMessage: String?) {
+        prefs.lastHttpStatus = httpStatus
+        prefs.lastResponseBody = body
+        prefs.lastErrorMessage = errorMessage ?: ""
+        prefs.lastAttemptAt = System.currentTimeMillis()
+    }
+
+    /** Broadcast Test Send result so MainActivity can pop a dialog. */
+    private fun broadcastTestResult(httpStatus: Int, body: String, errorMessage: String?) {
+        val intent = Intent(ACTION_TEST_RESULT).apply {
+            setPackage(packageName)
+            putExtra(EXTRA_HTTP_STATUS, httpStatus)
+            putExtra(EXTRA_BODY, body)
+            putExtra(EXTRA_ERROR, errorMessage ?: "")
+        }
+        sendBroadcast(intent)
     }
 
     private fun registerConnectivityListener() {
@@ -257,6 +294,12 @@ class LocationForegroundService : Service() {
         const val ACTION_STOP = "com.family.locationsender.action.STOP"
         const val ACTION_TEST_SEND = "com.family.locationsender.action.TEST_SEND"
         const val ACTION_FLUSH_QUEUE = "com.family.locationsender.action.FLUSH_QUEUE"
+
+        // Broadcast emitted after a Test Send so the UI can show a dialog.
+        const val ACTION_TEST_RESULT = "com.family.locationsender.action.TEST_RESULT"
+        const val EXTRA_HTTP_STATUS = "http_status"
+        const val EXTRA_BODY = "body"
+        const val EXTRA_ERROR = "error"
 
         fun start(ctx: Context) {
             val i = Intent(ctx, LocationForegroundService::class.java).setAction(ACTION_START)

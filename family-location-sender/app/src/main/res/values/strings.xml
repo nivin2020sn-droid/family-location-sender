@@ -48,6 +48,8 @@
     <string name="unknown">Unknown</string>
     <string name="complete_setup_first">Please complete setup first</string>
     <string name="test_send_queued">Test send queued</string>
+    <string name="test_result_success_title">Test Send — Success</string>
+    <string name="test_result_fail_title">Test Send — Failed</string>
 
     <string name="fmt_gps">GPS: %1$s</string>
     <string name="fmt_net">Internet: %1$s</string>
