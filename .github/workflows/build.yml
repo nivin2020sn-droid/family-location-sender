@@ -9,10 +9,9 @@ on:
 
 jobs:
   build:
-    name: Assemble release APK
+    name: Build APK
     runs-on: ubuntu-latest
 
-    # The Android project lives in a sub-folder of the repository.
     defaults:
       run:
         working-directory: family-location-sender
@@ -27,76 +26,81 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Android SDK
+      - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools platforms;android-34 build-tools;34.0.0'
 
-      - name: Setup Gradle
+      - name: Set up Gradle 8.7
         uses: gradle/actions/setup-gradle@v3
         with:
           gradle-version: '8.7'
+          cache-disabled: true
+
+      - name: Show environment
+        run: |
+          echo "JAVA_HOME=$JAVA_HOME"
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          java -version
+          gradle --version
+          ls -la
 
       - name: Generate Gradle wrapper
         run: |
           gradle wrapper --gradle-version 8.7 --distribution-type bin
           chmod +x ./gradlew
+          ls -la gradlew
 
-      - name: Show project info
-        run: ./gradlew --version && ls -la
+      - name: Clean previous outputs
+        run: ./gradlew clean --no-daemon
 
-      - name: Build debug APK (verbose)
-        id: assemble_debug
+      - name: Build debug APK
+        run: ./gradlew :app:assembleDebug --no-daemon --stacktrace --warning-mode=all
+
+      - name: Build release APK (unsigned)
+        run: ./gradlew :app:assembleRelease --no-daemon --stacktrace --warning-mode=all
         continue-on-error: true
-        run: ./gradlew assembleDebug --no-daemon --stacktrace --info 2>&1 | tee build-debug.log
 
-      - name: Build release APK (unsigned, verbose)
-        id: assemble_release
-        continue-on-error: true
-        run: ./gradlew assembleRelease --no-daemon --stacktrace --info 2>&1 | tee build-release.log
-
-      - name: Show last 200 lines of build logs on failure
-        if: steps.assemble_debug.outcome == 'failure' || steps.assemble_release.outcome == 'failure'
-        run: |
-          echo "=========== DEBUG LOG (tail) ==========="
-          tail -n 200 build-debug.log || true
-          echo "=========== RELEASE LOG (tail) ==========="
-          tail -n 200 build-release.log || true
-
-      - name: List generated APKs
+      - name: List ALL build outputs (debug)
         if: always()
         run: |
-          echo "Debug APKs:"
-          find app/build/outputs/apk/debug -name "*.apk" -print 2>/dev/null || true
-          echo "Release APKs:"
-          find app/build/outputs/apk/release -name "*.apk" -print 2>/dev/null || true
+          echo "=========== Directory tree under app/build/ ==========="
+          find app/build -type d 2>/dev/null | head -50
+          echo ""
+          echo "=========== ALL .apk files in the workspace ==========="
+          find . -name "*.apk" -type f 2>/dev/null
+          echo ""
+          echo "=========== Contents of app/build/outputs (if any) ==========="
+          if [ -d app/build/outputs ]; then
+            find app/build/outputs -type f 2>/dev/null
+          else
+            echo "  (app/build/outputs does not exist)"
+          fi
+
+      - name: Copy APKs to a flat folder
+        if: always()
+        run: |
+          mkdir -p artifacts
+          # Copy every APK we can find under the project to a single folder
+          find . -name "*.apk" -type f -exec cp -v {} artifacts/ \; 2>/dev/null || true
+          echo ""
+          echo "=========== Files staged for upload ==========="
+          ls -la artifacts/ || true
 
       - name: Upload Family-Location-Sender-APK
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: Family-Location-Sender-APK
-          path: |
-            family-location-sender/app/build/outputs/apk/debug/*.apk
-            family-location-sender/app/build/outputs/apk/release/*.apk
+          path: family-location-sender/artifacts/*.apk
           if-no-files-found: warn
           retention-days: 30
 
-      - name: Upload build logs (for debugging)
+      - name: Upload full build/outputs as a backup
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: build-logs
-          path: |
-            family-location-sender/build-debug.log
-            family-location-sender/build-release.log
+          name: full-build-outputs
+          path: family-location-sender/app/build/outputs/
           if-no-files-found: ignore
           retention-days: 14
-
-      - name: Fail job if no APK was produced
-        if: always()
-        run: |
-          count=$(find app/build/outputs/apk -name "*.apk" 2>/dev/null | wc -l)
-          echo "APK count: $count"
-          if [ "$count" -eq 0 ]; then
-            echo "::error::No APK was produced — see build-debug.log / build-release.log artifacts."
-            exit 1
-          fi
