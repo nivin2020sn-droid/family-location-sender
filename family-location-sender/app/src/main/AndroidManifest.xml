@@ -56,7 +56,6 @@
             android:exported="true"
             android:launchMode="singleTask"
             android:excludeFromRecents="false"
-            android:showWhenLocked="false"
             android:theme="@style/Theme.FamilyLocationSender">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

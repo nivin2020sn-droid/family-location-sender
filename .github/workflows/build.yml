@@ -27,39 +27,76 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
         with:
           gradle-version: '8.7'
 
-      - name: Generate Gradle wrapper (if missing)
+      - name: Generate Gradle wrapper
         run: |
-          if [ ! -f ./gradlew ]; then
-            gradle wrapper --gradle-version 8.7 --distribution-type bin
-          fi
+          gradle wrapper --gradle-version 8.7 --distribution-type bin
           chmod +x ./gradlew
 
-      - name: Build release APK (unsigned)
-        run: gradle assembleRelease --no-daemon --stacktrace
+      - name: Show project info
+        run: ./gradlew --version && ls -la
 
-      - name: Build debug APK (fallback / smoke build)
-        if: always()
-        run: gradle assembleDebug --no-daemon --stacktrace
+      - name: Build debug APK (verbose)
+        id: assemble_debug
+        continue-on-error: true
+        run: ./gradlew assembleDebug --no-daemon --stacktrace --info 2>&1 | tee build-debug.log
+
+      - name: Build release APK (unsigned, verbose)
+        id: assemble_release
+        continue-on-error: true
+        run: ./gradlew assembleRelease --no-daemon --stacktrace --info 2>&1 | tee build-release.log
+
+      - name: Show last 200 lines of build logs on failure
+        if: steps.assemble_debug.outcome == 'failure' || steps.assemble_release.outcome == 'failure'
+        run: |
+          echo "=========== DEBUG LOG (tail) ==========="
+          tail -n 200 build-debug.log || true
+          echo "=========== RELEASE LOG (tail) ==========="
+          tail -n 200 build-release.log || true
 
       - name: List generated APKs
         if: always()
         run: |
-          echo "Release APKs:"
-          ls -la app/build/outputs/apk/release/ || true
           echo "Debug APKs:"
-          ls -la app/build/outputs/apk/debug/ || true
+          find app/build/outputs/apk/debug -name "*.apk" -print 2>/dev/null || true
+          echo "Release APKs:"
+          find app/build/outputs/apk/release -name "*.apk" -print 2>/dev/null || true
 
       - name: Upload Family-Location-Sender-APK
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: Family-Location-Sender-APK
           path: |
-            family-location-sender/app/build/outputs/apk/release/*.apk
             family-location-sender/app/build/outputs/apk/debug/*.apk
-          if-no-files-found: error
+            family-location-sender/app/build/outputs/apk/release/*.apk
+          if-no-files-found: warn
           retention-days: 30
+
+      - name: Upload build logs (for debugging)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs
+          path: |
+            family-location-sender/build-debug.log
+            family-location-sender/build-release.log
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Fail job if no APK was produced
+        if: always()
+        run: |
+          count=$(find app/build/outputs/apk -name "*.apk" 2>/dev/null | wc -l)
+          echo "APK count: $count"
+          if [ "$count" -eq 0 ]; then
+            echo "::error::No APK was produced — see build-debug.log / build-release.log artifacts."
+            exit 1
+          fi

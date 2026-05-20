@@ -38,9 +38,7 @@
                 android:layout_marginStart="16dp"
                 android:textColor="@color/text_primary"
                 android:textSize="22sp"
-                android:fontFamily="sans-serif-medium"
-                tools:text="Member Name"
-                xmlns:tools="http://schemas.android.com/tools" />
+                android:fontFamily="sans-serif-medium" />
         </LinearLayout>
 
         <!-- Status grid -->
