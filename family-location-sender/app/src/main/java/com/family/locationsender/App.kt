@@ -6,6 +6,7 @@ import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.util.Log
 import com.family.locationsender.ui.LockActivity
 import com.family.locationsender.util.InactivityTracker
 import com.family.locationsender.util.LocaleHelper
@@ -17,31 +18,55 @@ class App : Application() {
         private set
 
     override fun attachBaseContext(base: Context) {
-        super.attachBaseContext(LocaleHelper.applySaved(base))
+        // Locale application can throw on some devices if encrypted prefs
+        // fail to initialise. Fall back to the original base context so the
+        // app does NOT crash at startup.
+        val ctx = try {
+            LocaleHelper.applySaved(base)
+        } catch (t: Throwable) {
+            Log.e(TAG, "applySaved locale failed; using base context", t)
+            base
+        }
+        super.attachBaseContext(ctx)
     }
 
     override fun onCreate() {
         super.onCreate()
         instance = this
-        createNotificationChannel()
 
-        inactivityTracker = InactivityTracker(
-            timeoutMs = 60_000L, // 1 minute idle -> lock
-            onTimeout = { forceLock() },
-            onBackgrounded = { forceLock() }
-        )
-        registerActivityLifecycleCallbacks(inactivityTracker)
+        try {
+            createNotificationChannel()
+        } catch (t: Throwable) {
+            Log.e(TAG, "createNotificationChannel failed", t)
+        }
+
+        try {
+            inactivityTracker = InactivityTracker(
+                timeoutMs = 60_000L, // 1 minute idle -> lock
+                onTimeout = { safeForceLock() },
+                onBackgrounded = { safeForceLock() }
+            )
+            registerActivityLifecycleCallbacks(inactivityTracker)
+        } catch (t: Throwable) {
+            Log.e(TAG, "InactivityTracker init failed", t)
+        }
     }
 
-    private fun forceLock() {
-        if (!SessionState.authenticated) return
-        SessionState.lock()
-        val intent = Intent(this, LockActivity::class.java).apply {
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or
-                    Intent.FLAG_ACTIVITY_CLEAR_TOP or
-                    Intent.FLAG_ACTIVITY_SINGLE_TOP)
+    private fun safeForceLock() {
+        try {
+            if (!SessionState.authenticated) return
+            SessionState.lock()
+            val intent = Intent(this, LockActivity::class.java).apply {
+                addFlags(
+                    Intent.FLAG_ACTIVITY_NEW_TASK or
+                            Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                            Intent.FLAG_ACTIVITY_SINGLE_TOP
+                )
+            }
+            startActivity(intent)
+        } catch (t: Throwable) {
+            Log.e(TAG, "forceLock failed", t)
         }
-        startActivity(intent)
     }
 
     private fun createNotificationChannel() {
@@ -60,6 +85,7 @@ class App : Application() {
     }
 
     companion object {
+        private const val TAG = "FLS-App"
         const val CHANNEL_ID = "fls_location_channel"
         const val NOTIFICATION_ID = 1001
 

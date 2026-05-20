@@ -4,31 +4,48 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.SharedPreferences
 import android.provider.Settings
+import android.util.Log
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import java.security.MessageDigest
 import java.util.UUID
 
 /**
- * Wrapper around EncryptedSharedPreferences. Stores app settings, hashed password,
- * counters and the last-known status. Never stores location history.
+ * Wrapper around EncryptedSharedPreferences with a safe fallback to standard
+ * SharedPreferences when the encryption layer fails to initialise (which is
+ * a known issue with `security-crypto:1.1.0-alpha06` on some devices, e.g.
+ * locked/broken Android Keystore, certain OEM ROMs, etc.).
+ *
+ * Stores app settings, hashed password, counters and the last-known status.
+ * Never stores location history.
  */
 class Prefs(context: Context) {
 
     private val appContext = context.applicationContext
 
     private val sp: SharedPreferences by lazy {
-        val masterKey = MasterKey.Builder(appContext)
-            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-            .build()
+        try {
+            val masterKey = MasterKey.Builder(appContext)
+                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                .build()
 
-        EncryptedSharedPreferences.create(
-            appContext,
-            "fls_prefs",
-            masterKey,
-            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-        )
+            EncryptedSharedPreferences.create(
+                appContext,
+                "fls_prefs",
+                masterKey,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
+        } catch (t: Throwable) {
+            // EncryptedSharedPreferences can throw on some devices with a
+            // broken/locked Android Keystore. Fall back to plain SharedPrefs
+            // so the app remains usable.
+            Log.e(TAG, "EncryptedSharedPreferences init failed, falling back to plain SharedPreferences", t)
+            try {
+                appContext.deleteSharedPreferences("fls_prefs")
+            } catch (_: Throwable) {}
+            appContext.getSharedPreferences("fls_prefs_plain", Context.MODE_PRIVATE)
+        }
     }
 
     // ---------------- First run ----------------
@@ -123,6 +140,8 @@ class Prefs(context: Context) {
     }
 
     companion object {
+        private const val TAG = "FLS-Prefs"
+
         const val DEFAULT_API_ENDPOINT =
             "https://my-family-my-life-api.onrender.com/api/location/update"
         const val DEFAULT_PASSWORD = "1001"

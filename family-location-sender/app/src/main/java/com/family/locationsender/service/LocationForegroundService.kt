@@ -156,6 +156,11 @@ class LocationForegroundService : Service() {
 
     private suspend fun sendLocation(loc: Location) {
         if (prefs.apiEndpoint.isBlank()) return // nothing to send to
+        if (prefs.familyCode.isBlank() || prefs.memberName.isBlank()) {
+            // Setup not completed yet — do not contact the server with empty
+            // identity, to avoid filling the offline queue with useless rows.
+            return
+        }
 
         val net = DeviceUtils.networkInfo(this)
         val payload = LocationPayload(

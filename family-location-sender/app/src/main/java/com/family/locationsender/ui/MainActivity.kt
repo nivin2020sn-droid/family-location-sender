@@ -12,6 +12,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.PowerManager
+import android.util.Log
 import android.provider.Settings
 import android.util.Base64
 import android.view.View
@@ -80,40 +81,58 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-        prefs = Prefs.get(this)
-        queue = OfflineQueue.get(this)
-
-        binding.btnStart.setOnClickListener { onStartClicked() }
-        binding.btnStop.setOnClickListener { promptPassword { stopTracking() } }
-        binding.btnSettings.setOnClickListener { promptPassword { openSettings() } }
-        binding.btnTest.setOnClickListener { onTestClicked() }
-        binding.btnRefresh.setOnClickListener { renderStatus() }
-        binding.btnLockNow.setOnClickListener { lockNow() }
-
-        // Ask notification permission (Android 13+) for foreground notif
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(
-                    this, Manifest.permission.POST_NOTIFICATIONS
-                ) != PackageManager.PERMISSION_GRANTED) {
-                askNotifications.launch(Manifest.permission.POST_NOTIFICATIONS)
-            }
+        try {
+            binding = ActivityMainBinding.inflate(layoutInflater)
+            setContentView(binding.root)
+        } catch (t: Throwable) {
+            Log.e(TAG, "Failed to inflate main layout", t)
+            val tv = android.widget.TextView(this)
+            tv.text = "Startup error — see logcat"
+            setContentView(tv)
+            return
         }
 
-        maybeShowDeviceAdminTip()
-        maybeShowBatteryTip()
+        try {
+            prefs = Prefs.get(this)
+            queue = OfflineQueue.get(this)
+
+            binding.btnStart.setOnClickListener { onStartClicked() }
+            binding.btnStop.setOnClickListener { promptPassword { stopTracking() } }
+            binding.btnSettings.setOnClickListener { promptPassword { openSettings() } }
+            binding.btnTest.setOnClickListener { onTestClicked() }
+            binding.btnRefresh.setOnClickListener { renderStatus() }
+            binding.btnLockNow.setOnClickListener { lockNow() }
+
+            // Ask notification permission (Android 13+) for foreground notif
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                if (ContextCompat.checkSelfPermission(
+                        this, Manifest.permission.POST_NOTIFICATIONS
+                    ) != PackageManager.PERMISSION_GRANTED) {
+                    askNotifications.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
+            }
+
+            maybeShowDeviceAdminTip()
+            maybeShowBatteryTip()
+        } catch (t: Throwable) {
+            Log.e(TAG, "MainActivity init failed", t)
+            Toast.makeText(this, "Startup error — see logcat", Toast.LENGTH_LONG).show()
+        }
     }
 
     override fun onResume() {
         super.onResume()
-        if (!SessionState.authenticated) {
-            startActivity(Intent(this, LockActivity::class.java))
-            finish(); return
+        try {
+            if (!SessionState.authenticated) {
+                startActivity(Intent(this, LockActivity::class.java))
+                finish(); return
+            }
+            renderStatus()
+            handler.removeCallbacks(refreshRunnable)
+            handler.postDelayed(refreshRunnable, 5_000)
+        } catch (t: Throwable) {
+            Log.e(TAG, "onResume failed", t)
         }
-        renderStatus()
-        handler.removeCallbacks(refreshRunnable)
-        handler.postDelayed(refreshRunnable, 5_000)
     }
 
     override fun onPause() {
@@ -324,6 +343,10 @@ class MainActivity : AppCompatActivity() {
             }
             .setNegativeButton(R.string.cancel, null)
             .show()
+    }
+
+    companion object {
+        private const val TAG = "FLS-MainActivity"
     }
 }
 

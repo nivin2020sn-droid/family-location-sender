@@ -2,13 +2,16 @@ package com.family.locationsender.data
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import org.json.JSONArray
 
 /**
- * FIFO queue of failed/offline location payloads, persisted encrypted.
- * Holds raw JSON strings only; entries are removed once delivered.
+ * FIFO queue of failed/offline location payloads, persisted encrypted (with a
+ * safe fallback to plain SharedPreferences if the Android Keystore is broken
+ * on the device). Holds raw JSON strings only; entries are removed once
+ * delivered.
  *
  * This is **not** a history log: payloads sit here only between the moment
  * they could not be sent and the moment they are finally delivered.
@@ -18,16 +21,22 @@ class OfflineQueue private constructor(context: Context) {
     private val appContext = context.applicationContext
 
     private val sp: SharedPreferences by lazy {
-        val masterKey = MasterKey.Builder(appContext)
-            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-            .build()
-        EncryptedSharedPreferences.create(
-            appContext,
-            "fls_queue",
-            masterKey,
-            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-        )
+        try {
+            val masterKey = MasterKey.Builder(appContext)
+                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                .build()
+            EncryptedSharedPreferences.create(
+                appContext,
+                "fls_queue",
+                masterKey,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
+        } catch (t: Throwable) {
+            Log.e(TAG, "EncryptedSharedPreferences init failed for queue, falling back to plain prefs", t)
+            try { appContext.deleteSharedPreferences("fls_queue") } catch (_: Throwable) {}
+            appContext.getSharedPreferences("fls_queue_plain", Context.MODE_PRIVATE)
+        }
     }
 
     @Synchronized
@@ -76,6 +85,7 @@ class OfflineQueue private constructor(context: Context) {
     }
 
     companion object {
+        private const val TAG = "FLS-OfflineQueue"
         private const val KEY = "queue"
         private const val MAX_SIZE = 500
 
