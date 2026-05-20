@@ -16,7 +16,7 @@
     <string name="full_name">Full name</string>
     <string name="family_code">Family code</string>
     <string name="api_endpoint">API endpoint</string>
-    <string name="api_endpoint_helper">Default: https://family.kvd.dscloud.me/api/location/update</string>
+    <string name="api_endpoint_helper">Example: https://example.com/api/location/update</string>
     <string name="new_password_optional">New password (optional)</string>
     <string name="save_settings">Save</string>
     <string name="saved">Settings saved</string>
@@ -58,6 +58,13 @@
     <string name="fmt_failure">Failed sends: %1$d</string>
     <string name="fmt_service">Service: %1$s</string>
     <string name="fmt_api">API: %1$s</string>
+    <string name="fmt_queue">Pending (offline): %1$d</string>
+    <string name="api_not_set">Not configured</string>
+    <string name="api_required">Please set the API endpoint in Settings first</string>
+
+    <string name="battery_warning_title">Disable battery optimization</string>
+    <string name="battery_warning_body">For continuous tracking, exempt this app from battery optimization.</string>
+    <string name="battery_warning_button">Disable optimization</string>
 
     <string name="on">ON</string>
     <string name="off">OFF</string>

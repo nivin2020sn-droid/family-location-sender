@@ -20,23 +20,25 @@ object ApiClient {
             .build()
     }
 
+    fun send(endpoint: String, payload: LocationPayload): Boolean =
+        sendRaw(endpoint, payload.toJson())
+
     /**
-     * Send a payload. Returns true if HTTP 2xx, false otherwise.
-     * Errors are returned as false (no exception leaks).
+     * Send a raw, already-serialized JSON body. Used by the offline-queue
+     * flush path. Returns true on HTTP 2xx, false otherwise (no exception
+     * leaks).
      */
-    fun send(endpoint: String, payload: LocationPayload): Boolean {
+    fun sendRaw(endpoint: String, jsonBody: String): Boolean {
         if (endpoint.isBlank()) return false
         return try {
-            val body = payload.toJson().toRequestBody(JSON)
+            val body = jsonBody.toRequestBody(JSON)
             val req = Request.Builder()
                 .url(endpoint)
                 .post(body)
                 .header("Content-Type", "application/json")
                 .header("User-Agent", "FamilyLocationSender/1.0 Android")
                 .build()
-            client.newCall(req).execute().use { resp ->
-                resp.isSuccessful
-            }
+            client.newCall(req).execute().use { resp -> resp.isSuccessful }
         } catch (e: Exception) {
             false
         }

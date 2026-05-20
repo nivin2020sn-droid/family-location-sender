@@ -123,7 +123,6 @@ class Prefs(context: Context) {
     }
 
     companion object {
-        const val DEFAULT_API_ENDPOINT = "https://family.kvd.dscloud.me/api/location/update"
         const val DEFAULT_PASSWORD = "1001"
 
         const val INTERVAL_1MIN = "1m"

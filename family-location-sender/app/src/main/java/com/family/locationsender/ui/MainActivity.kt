@@ -21,6 +21,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.family.locationsender.R
+import com.family.locationsender.data.OfflineQueue
 import com.family.locationsender.data.Prefs
 import com.family.locationsender.databinding.ActivityMainBinding
 import com.family.locationsender.receiver.AppDeviceAdminReceiver
@@ -41,6 +42,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var prefs: Prefs
+    private lateinit var queue: OfflineQueue
     private val handler = Handler(Looper.getMainLooper())
     private val refreshRunnable = object : Runnable {
         override fun run() { renderStatus(); handler.postDelayed(this, 5_000) }
@@ -81,6 +83,7 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         prefs = Prefs.get(this)
+        queue = OfflineQueue.get(this)
 
         binding.btnStart.setOnClickListener { onStartClicked() }
         binding.btnStop.setOnClickListener { promptPassword { stopTracking() } }
@@ -99,6 +102,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         maybeShowDeviceAdminTip()
+        maybeShowBatteryTip()
     }
 
     override fun onResume() {
@@ -160,16 +164,22 @@ class MainActivity : AppCompatActivity() {
 
         binding.tvSuccess.text = getString(R.string.fmt_success, prefs.successCount)
         binding.tvFailure.text = getString(R.string.fmt_failure, prefs.failureCount)
+        binding.tvQueue.text = getString(R.string.fmt_queue, queue.size())
 
         binding.tvServiceStatus.text = getString(
             R.string.fmt_service,
             getString(if (prefs.trackingEnabled) R.string.running else R.string.stopped)
         )
 
-        val apiShort = prefs.apiEndpoint.let {
+        val apiShort = if (prefs.apiEndpoint.isBlank()) {
+            getString(R.string.api_not_set)
+        } else prefs.apiEndpoint.let {
             if (it.length > 48) it.take(28) + "…" + it.takeLast(16) else it
         }
         binding.tvApi.text = getString(R.string.fmt_api, apiShort)
+
+        // Re-evaluate battery warning visibility each refresh
+        maybeShowBatteryTip()
     }
 
     private fun onStartClicked() {
@@ -226,6 +236,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun onTestClicked() {
+        if (prefs.apiEndpoint.isBlank()) {
+            Toast.makeText(this, R.string.api_required, Toast.LENGTH_LONG).show()
+            return
+        }
         val needed = mutableListOf<String>()
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
             != PackageManager.PERMISSION_GRANTED) {
@@ -284,12 +298,35 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun maybeShowBatteryTip() {
+        try {
+            val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
+            if (pm.isIgnoringBatteryOptimizations(packageName)) {
+                binding.cardBatteryWarning.visibility = View.GONE
+            } else {
+                binding.cardBatteryWarning.visibility = View.VISIBLE
+                binding.btnDisableBattery.setOnClickListener {
+                    requestIgnoreBatteryOptimizations()
+                }
+            }
+        } catch (_: Exception) {
+            binding.cardBatteryWarning.visibility = View.GONE
+        }
+    }
+
     private fun promptOpenSettings(messageRes: Int) {
         AlertDialog.Builder(this)
             .setMessage(messageRes)
             .setPositiveButton(R.string.open_settings) { _, _ ->
                 val i = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
                     .setData(Uri.parse("package:$packageName"))
+                startActivity(i)
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+}
+.setData(Uri.parse("package:$packageName"))
                 startActivity(i)
             }
             .setNegativeButton(R.string.cancel, null)

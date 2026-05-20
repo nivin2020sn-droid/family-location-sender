@@ -61,8 +61,52 @@
             <TextView android:id="@+id/tvLastSent" style="@style/StatusRow" />
             <TextView android:id="@+id/tvSuccess" style="@style/StatusRow" />
             <TextView android:id="@+id/tvFailure" style="@style/StatusRow" />
+            <TextView android:id="@+id/tvQueue" style="@style/StatusRow" />
             <TextView android:id="@+id/tvApi" style="@style/StatusRow" />
         </LinearLayout>
+
+        <!-- Battery optimization warning -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardBatteryWarning"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:visibility="gone"
+            app:cardBackgroundColor="@color/warn_bg"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="0dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="14dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/battery_warning_title"
+                    android:textColor="@color/warn_text"
+                    android:textStyle="bold"
+                    android:textSize="15sp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="@string/battery_warning_body"
+                    android:textColor="@color/warn_text"
+                    android:textSize="13sp"/>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnDisableBattery"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/battery_warning_button"
+                    style="@style/Widget.Material3.Button.OutlinedButton"/>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
 
         <!-- Device Admin warning -->
         <androidx.cardview.widget.CardView

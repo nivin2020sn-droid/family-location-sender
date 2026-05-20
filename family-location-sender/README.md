@@ -28,8 +28,14 @@ disabled, removed or tampered with easily.
 - **Device Admin** receiver — optional, makes it harder to uninstall the app
   without first disabling the policy.
 - **English + Arabic** with full RTL support.
-- **Configurable API endpoint** — default
-  `https://family.kvd.dscloud.me/api/location/update`; user-editable.
+- **Configurable API endpoint** — **no default**; the user must enter the API
+  URL during initial setup. It can be changed any time from the password-
+  protected Settings screen (example: `https://example.com/api/location/update`).
+- **Offline queue** — when the device is offline (or a request fails),
+  payloads are encrypted and queued on disk. As soon as connectivity returns
+  (or the next request succeeds) the queue is drained in FIFO order, then the
+  entries are deleted. **No full history is ever kept on the device** — only
+  the not-yet-delivered payloads.
 - Ready-to-use **GitHub Actions** workflow that produces a debug APK.
 
 ---
@@ -116,8 +122,8 @@ and run `./gradlew assembleRelease`.
    - Profile photo (camera or gallery)
    - Full name
    - Family code
-   - API endpoint (defaults to
-     `https://family.kvd.dscloud.me/api/location/update`)
+   - **API endpoint** (no default — you must type the URL of your server,
+     e.g. `https://example.com/api/location/update`)
    - Update interval (default: Smart Mode)
    - Optional: change the password
 3. **Main Dashboard** shows live status. Press **Start Tracking** to begin.

@@ -16,7 +16,7 @@
     <string name="full_name">الاسم الكامل</string>
     <string name="family_code">رمز العائلة</string>
     <string name="api_endpoint">رابط الـ API</string>
-    <string name="api_endpoint_helper">الافتراضي: https://family.kvd.dscloud.me/api/location/update</string>
+    <string name="api_endpoint_helper">مثال: https://example.com/api/location/update</string>
     <string name="new_password_optional">كلمة مرور جديدة (اختياري)</string>
     <string name="save_settings">حفظ</string>
     <string name="saved">تم حفظ الإعدادات</string>
@@ -58,6 +58,13 @@
     <string name="fmt_failure">عدد الإرساليات الفاشلة: %1$d</string>
     <string name="fmt_service">حالة الخدمة: %1$s</string>
     <string name="fmt_api">الـ API: %1$s</string>
+    <string name="fmt_queue">في الانتظار (دون اتصال): %1$d</string>
+    <string name="api_not_set">غير مضبوط</string>
+    <string name="api_required">الرجاء ضبط رابط الـ API من الإعدادات أولًا</string>
+
+    <string name="battery_warning_title">تعطيل تحسين البطارية</string>
+    <string name="battery_warning_body">للتتبع المستمر، يرجى إعفاء هذا التطبيق من تحسين البطارية.</string>
+    <string name="battery_warning_button">تعطيل التحسين</string>
 
     <string name="on">تشغيل</string>
     <string name="off">إيقاف</string>

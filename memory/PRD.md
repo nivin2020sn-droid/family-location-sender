@@ -39,6 +39,12 @@ independent from the *My Family My Life* web project.
 11. **JSON payload** matches the spec from the brief.
 12. **GitHub Actions workflow** that builds `app-debug.apk` (and unsigned
     release APK) on every push.
+13. **Offline queue** (encrypted, FIFO, capped at 500 entries) — failed/offline
+    payloads are persisted and auto-replayed when connectivity returns
+    (via `ConnectivityManager.NetworkCallback`). Drained items are deleted
+    immediately — **no on-device history**.
+14. **Battery-optimization warning card** on the dashboard with one-tap exempt
+    button, shown only when the app is still subject to optimization.
 
 ## What is **not** in the app (by design)
 - No SOS / panic feature
@@ -66,7 +72,7 @@ gradle wrapper --gradle-version 8.7 --distribution-type bin
 | Setting | Default |
 |---|---|
 | App password | `1001` |
-| API endpoint | `https://family.kvd.dscloud.me/api/location/update` |
+| API endpoint | **(empty — user must enter)** |
 | Send interval | Smart Mode |
 | Language | English (switchable to Arabic) |
 
