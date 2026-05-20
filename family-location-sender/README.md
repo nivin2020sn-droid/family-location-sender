@@ -77,15 +77,23 @@ family-location-sender/
 
 ### Option A — GitHub Actions (recommended)
 
-1. Push this repository to GitHub.
-2. Open the **Actions** tab → run **Build Android APK** (it also runs on every
-   push).
-3. Download the artifact `family-location-sender-debug-apk` from the workflow
-   summary.
+1. Push the **repository root** (which contains both this folder and
+   `.github/workflows/build.yml` at the top level) to GitHub.
+2. Open the **Actions** tab → run **Build Family Location Sender APK** (it
+   also runs on every push).
+3. Download the artifact **`Family-Location-Sender-APK`** from the workflow
+   summary — it contains the release (unsigned) and debug APKs.
 4. Install on a device:
    ```bash
-   adb install family-location-sender-debug.apk
+   adb install app-release-unsigned.apk
+   # or
+   adb install app-debug.apk
    ```
+
+> **Note:** the workflow file lives at the **repo root** in
+> `.github/workflows/build.yml` (not inside `family-location-sender/`).
+> It uses `working-directory: family-location-sender` so the build runs in
+> this subfolder.
 
 The workflow uses Gradle 8.7 / JDK 17 and auto-generates the Gradle wrapper.
 
