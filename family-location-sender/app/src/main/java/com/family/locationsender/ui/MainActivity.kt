@@ -51,6 +51,18 @@ class MainActivity : AppCompatActivity() {
         override fun run() { renderStatus(); handler.postDelayed(this, 5_000) }
     }
 
+    /** Receives Test Send result broadcasts from the foreground service. */
+    private val testResultReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            intent ?: return
+            val status = intent.getIntExtra(LocationForegroundService.EXTRA_HTTP_STATUS, 0)
+            val body = intent.getStringExtra(LocationForegroundService.EXTRA_BODY) ?: ""
+            val err = intent.getStringExtra(LocationForegroundService.EXTRA_ERROR) ?: ""
+            showTestResultDialog(status, body, err)
+            renderStatus()
+        }
+    }
+
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(LocaleHelper.applySaved(newBase))
     }
