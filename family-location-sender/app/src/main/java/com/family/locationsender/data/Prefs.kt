@@ -1,0 +1,158 @@
+package com.family.locationsender.data
+
+import android.annotation.SuppressLint
+import android.content.Context
+import android.content.SharedPreferences
+import android.provider.Settings
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKey
+import java.security.MessageDigest
+import java.util.UUID
+
+/**
+ * Wrapper around EncryptedSharedPreferences. Stores app settings, hashed password,
+ * counters and the last-known status. Never stores location history.
+ */
+class Prefs(context: Context) {
+
+    private val appContext = context.applicationContext
+
+    private val sp: SharedPreferences by lazy {
+        val masterKey = MasterKey.Builder(appContext)
+            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+            .build()
+
+        EncryptedSharedPreferences.create(
+            appContext,
+            "fls_prefs",
+            masterKey,
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+        )
+    }
+
+    // ---------------- First run ----------------
+    var firstRunDone: Boolean
+        get() = sp.getBoolean(KEY_FIRST_RUN_DONE, false)
+        set(v) = sp.edit().putBoolean(KEY_FIRST_RUN_DONE, v).apply()
+
+    // ---------------- Identity ----------------
+    var memberName: String
+        get() = sp.getString(KEY_MEMBER_NAME, "") ?: ""
+        set(v) = sp.edit().putString(KEY_MEMBER_NAME, v).apply()
+
+    /** Base64-encoded profile image (PNG/JPG). */
+    var profileImage: String
+        get() = sp.getString(KEY_PROFILE_IMAGE, "") ?: ""
+        set(v) = sp.edit().putString(KEY_PROFILE_IMAGE, v).apply()
+
+    var familyCode: String
+        get() = sp.getString(KEY_FAMILY_CODE, "") ?: ""
+        set(v) = sp.edit().putString(KEY_FAMILY_CODE, v).apply()
+
+    // ---------------- API ----------------
+    var apiEndpoint: String
+        get() = sp.getString(KEY_API_ENDPOINT, DEFAULT_API_ENDPOINT) ?: DEFAULT_API_ENDPOINT
+        set(v) = sp.edit().putString(KEY_API_ENDPOINT, v).apply()
+
+    // ---------------- Password ----------------
+    /** Returns SHA-256 hash of stored password. Defaults to hash of `1001`. */
+    var passwordHash: String
+        get() = sp.getString(KEY_PASSWORD_HASH, sha256(DEFAULT_PASSWORD)) ?: sha256(DEFAULT_PASSWORD)
+        set(v) = sp.edit().putString(KEY_PASSWORD_HASH, v).apply()
+
+    fun checkPassword(input: String): Boolean = sha256(input) == passwordHash
+
+    fun setPassword(plain: String) {
+        passwordHash = sha256(plain)
+    }
+
+    // ---------------- Interval ----------------
+    var updateInterval: String
+        get() = sp.getString(KEY_UPDATE_INTERVAL, INTERVAL_SMART) ?: INTERVAL_SMART
+        set(v) = sp.edit().putString(KEY_UPDATE_INTERVAL, v).apply()
+
+    // ---------------- Device ----------------
+    @SuppressLint("HardwareIds")
+    val deviceId: String
+        get() {
+            val existing = sp.getString(KEY_DEVICE_ID, null)
+            if (!existing.isNullOrEmpty()) return existing
+            val androidId = try {
+                Settings.Secure.getString(appContext.contentResolver, Settings.Secure.ANDROID_ID)
+            } catch (e: Exception) { null }
+            val id = if (!androidId.isNullOrEmpty()) "and_$androidId" else "uid_${UUID.randomUUID()}"
+            sp.edit().putString(KEY_DEVICE_ID, id).apply()
+            return id
+        }
+
+    // ---------------- Tracking state ----------------
+    var trackingEnabled: Boolean
+        get() = sp.getBoolean(KEY_TRACKING_ENABLED, false)
+        set(v) = sp.edit().putBoolean(KEY_TRACKING_ENABLED, v).apply()
+
+    var successCount: Long
+        get() = sp.getLong(KEY_SUCCESS_COUNT, 0L)
+        set(v) = sp.edit().putLong(KEY_SUCCESS_COUNT, v).apply()
+
+    var failureCount: Long
+        get() = sp.getLong(KEY_FAILURE_COUNT, 0L)
+        set(v) = sp.edit().putLong(KEY_FAILURE_COUNT, v).apply()
+
+    var lastSendTimestamp: Long
+        get() = sp.getLong(KEY_LAST_SEND_TS, 0L)
+        set(v) = sp.edit().putLong(KEY_LAST_SEND_TS, v).apply()
+
+    fun incrementSuccess() {
+        sp.edit().putLong(KEY_SUCCESS_COUNT, successCount + 1).apply()
+    }
+
+    fun incrementFailure() {
+        sp.edit().putLong(KEY_FAILURE_COUNT, failureCount + 1).apply()
+    }
+
+    // ---------------- Language ----------------
+    var language: String
+        get() = sp.getString(KEY_LANGUAGE, LANG_EN) ?: LANG_EN
+        set(v) = sp.edit().putString(KEY_LANGUAGE, v).apply()
+
+    // ---------------- Helpers ----------------
+    private fun sha256(input: String): String {
+        val bytes = MessageDigest.getInstance("SHA-256").digest(input.toByteArray())
+        return bytes.joinToString("") { "%02x".format(it) }
+    }
+
+    companion object {
+        const val DEFAULT_API_ENDPOINT = "https://family.kvd.dscloud.me/api/location/update"
+        const val DEFAULT_PASSWORD = "1001"
+
+        const val INTERVAL_1MIN = "1m"
+        const val INTERVAL_3MIN = "3m"
+        const val INTERVAL_5MIN = "5m"
+        const val INTERVAL_15MIN = "15m"
+        const val INTERVAL_SMART = "smart"
+
+        const val LANG_EN = "en"
+        const val LANG_AR = "ar"
+
+        private const val KEY_FIRST_RUN_DONE = "first_run_done"
+        private const val KEY_MEMBER_NAME = "member_name"
+        private const val KEY_PROFILE_IMAGE = "profile_image"
+        private const val KEY_FAMILY_CODE = "family_code"
+        private const val KEY_API_ENDPOINT = "api_endpoint"
+        private const val KEY_PASSWORD_HASH = "password_hash"
+        private const val KEY_UPDATE_INTERVAL = "update_interval"
+        private const val KEY_DEVICE_ID = "device_id"
+        private const val KEY_TRACKING_ENABLED = "tracking_enabled"
+        private const val KEY_SUCCESS_COUNT = "success_count"
+        private const val KEY_FAILURE_COUNT = "failure_count"
+        private const val KEY_LAST_SEND_TS = "last_send_ts"
+        private const val KEY_LANGUAGE = "language"
+
+        @Volatile private var INSTANCE: Prefs? = null
+        fun get(context: Context): Prefs =
+            INSTANCE ?: synchronized(this) {
+                INSTANCE ?: Prefs(context.applicationContext).also { INSTANCE = it }
+            }
+    }
+}

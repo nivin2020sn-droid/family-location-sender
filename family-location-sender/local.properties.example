@@ -1,0 +1,4 @@
+# Place your Android SDK path here for local builds:
+# sdk.dir=/Users/you/Library/Android/sdk
+# Or, on CI / Linux:
+# sdk.dir=/opt/android-sdk

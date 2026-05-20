@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Family Location Sender</string>
+
+    <!-- Lock screen -->
+    <string name="lock_title">Welcome back</string>
+    <string name="lock_hint">Enter your password to continue</string>
+    <string name="password_hint">Password</string>
+    <string name="unlock">Unlock</string>
+    <string name="wrong_password">Wrong password</string>
+    <string name="switch_language">العربية / English</string>
+
+    <!-- Setup -->
+    <string name="setup_title">Initial Setup</string>
+    <string name="setup_subtitle">Please complete the setup to start tracking</string>
+    <string name="full_name">Full name</string>
+    <string name="family_code">Family code</string>
+    <string name="api_endpoint">API endpoint</string>
+    <string name="api_endpoint_helper">Default: https://family.kvd.dscloud.me/api/location/update</string>
+    <string name="new_password_optional">New password (optional)</string>
+    <string name="save_settings">Save</string>
+    <string name="saved">Settings saved</string>
+    <string name="profile_image">Profile image</string>
+    <string name="take_photo">Camera</string>
+    <string name="pick_gallery">Gallery</string>
+    <string name="required">Required</string>
+    <string name="invalid_url">Enter a valid URL (http/https)</string>
+    <string name="password_too_short">Password must be at least 4 characters</string>
+    <string name="passwords_mismatch">Passwords do not match</string>
+    <string name="error_load_image">Could not load image</string>
+    <string name="permission_denied">Permission denied</string>
+
+    <!-- Update interval -->
+    <string name="update_interval">Send interval</string>
+    <string name="interval_smart">Smart Mode (recommended)</string>
+    <string name="interval_1m">Every 1 minute</string>
+    <string name="interval_3m">Every 3 minutes</string>
+    <string name="interval_5m">Every 5 minutes</string>
+    <string name="interval_15m">Every 15 minutes</string>
+
+    <!-- Main dashboard -->
+    <string name="start_tracking">Start Tracking</string>
+    <string name="stop_tracking">Stop Tracking</string>
+    <string name="test_send">Test Send</string>
+    <string name="refresh">Refresh Status</string>
+    <string name="settings">Settings</string>
+    <string name="lock_now">Lock Now</string>
+    <string name="unknown">Unknown</string>
+    <string name="complete_setup_first">Please complete setup first</string>
+    <string name="test_send_queued">Test send queued</string>
+
+    <string name="fmt_gps">GPS: %1$s</string>
+    <string name="fmt_net">Internet: %1$s</string>
+    <string name="fmt_conn">Connection: %1$s</string>
+    <string name="fmt_battery">Battery: %1$d%%</string>
+    <string name="fmt_last_sent">Last sent: %1$s</string>
+    <string name="fmt_success">Successful sends: %1$d</string>
+    <string name="fmt_failure">Failed sends: %1$d</string>
+    <string name="fmt_service">Service: %1$s</string>
+    <string name="fmt_api">API: %1$s</string>
+
+    <string name="on">ON</string>
+    <string name="off">OFF</string>
+    <string name="online">Online</string>
+    <string name="offline">Offline</string>
+    <string name="wifi">Wi-Fi</string>
+    <string name="mobile">Mobile Data</string>
+    <string name="unknown_short">Unknown</string>
+    <string name="running">Running</string>
+    <string name="stopped">Stopped</string>
+
+    <!-- Notification -->
+    <string name="notif_title">Family Location Sender</string>
+    <string name="notif_text">Location tracking is running</string>
+
+    <!-- Background / permissions -->
+    <string name="background_location_title">Background location</string>
+    <string name="background_location_message">For tracking to work when the app is closed, please allow location access \"All the time\" on the next screen.</string>
+    <string name="background_location_recommended">Background location is recommended for continuous tracking</string>
+    <string name="permission_location_denied">Location permission denied. Open settings to enable it.</string>
+    <string name="ok">OK</string>
+    <string name="later">Later</string>
+    <string name="cancel">Cancel</string>
+    <string name="open_settings">Open settings</string>
+
+    <!-- Device admin -->
+    <string name="device_admin_label">Family Location Sender Admin</string>
+    <string name="device_admin_description">Protects the app from being easily uninstalled by children or other users.</string>
+    <string name="device_admin_explanation">Activating Device Admin requires disabling it from system settings before the app can be uninstalled.</string>
+    <string name="device_admin_warning_title">Protection recommended</string>
+    <string name="device_admin_warning_body">Enable Device Admin so this app cannot be uninstalled easily.</string>
+    <string name="enable_device_admin">Enable Device Admin</string>
+    <string name="device_admin_already_active">Device Admin is already active</string>
+    <string name="device_admin_enabled_toast">Device Admin enabled — app is protected</string>
+    <string name="device_admin_disabled_toast">Device Admin disabled — app is no longer protected</string>
+    <string name="device_admin_disable_warning">Disabling Device Admin will remove protection against uninstallation.</string>
+
+    <!-- Settings -->
+    <string name="language">Language</string>
+    <string name="english">English</string>
+    <string name="arabic">العربية</string>
+    <string name="change_password">Change password</string>
+    <string name="current_password">Current password</string>
+    <string name="new_password">New password</string>
+    <string name="confirm_password">Confirm password</string>
+    <string name="update_password">Update password</string>
+    <string name="password_updated">Password updated</string>
+</resources>

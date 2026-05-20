@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">إرسال موقع العائلة</string>
+
+    <!-- Lock screen -->
+    <string name="lock_title">مرحبًا بعودتك</string>
+    <string name="lock_hint">أدخل كلمة المرور للمتابعة</string>
+    <string name="password_hint">كلمة المرور</string>
+    <string name="unlock">فتح القفل</string>
+    <string name="wrong_password">كلمة المرور غير صحيحة</string>
+    <string name="switch_language">English / العربية</string>
+
+    <!-- Setup -->
+    <string name="setup_title">الإعداد الأولي</string>
+    <string name="setup_subtitle">يرجى إكمال الإعداد لبدء التتبع</string>
+    <string name="full_name">الاسم الكامل</string>
+    <string name="family_code">رمز العائلة</string>
+    <string name="api_endpoint">رابط الـ API</string>
+    <string name="api_endpoint_helper">الافتراضي: https://family.kvd.dscloud.me/api/location/update</string>
+    <string name="new_password_optional">كلمة مرور جديدة (اختياري)</string>
+    <string name="save_settings">حفظ</string>
+    <string name="saved">تم حفظ الإعدادات</string>
+    <string name="profile_image">الصورة الشخصية</string>
+    <string name="take_photo">الكاميرا</string>
+    <string name="pick_gallery">المعرض</string>
+    <string name="required">حقل مطلوب</string>
+    <string name="invalid_url">أدخل رابطًا صحيحًا (http/https)</string>
+    <string name="password_too_short">كلمة المرور يجب أن تكون 4 خانات على الأقل</string>
+    <string name="passwords_mismatch">كلمتا المرور غير متطابقتين</string>
+    <string name="error_load_image">تعذر تحميل الصورة</string>
+    <string name="permission_denied">تم رفض الإذن</string>
+
+    <!-- Update interval -->
+    <string name="update_interval">فترة الإرسال</string>
+    <string name="interval_smart">الوضع الذكي (موصى به)</string>
+    <string name="interval_1m">كل دقيقة</string>
+    <string name="interval_3m">كل 3 دقائق</string>
+    <string name="interval_5m">كل 5 دقائق</string>
+    <string name="interval_15m">كل 15 دقيقة</string>
+
+    <!-- Main dashboard -->
+    <string name="start_tracking">بدء التتبع</string>
+    <string name="stop_tracking">إيقاف التتبع</string>
+    <string name="test_send">إرسال تجريبي</string>
+    <string name="refresh">تحديث الحالة</string>
+    <string name="settings">الإعدادات</string>
+    <string name="lock_now">إقفال الآن</string>
+    <string name="unknown">غير معروف</string>
+    <string name="complete_setup_first">يرجى إكمال الإعداد أولًا</string>
+    <string name="test_send_queued">تم إرسال طلب تجريبي</string>
+
+    <string name="fmt_gps">GPS: %1$s</string>
+    <string name="fmt_net">الإنترنت: %1$s</string>
+    <string name="fmt_conn">نوع الاتصال: %1$s</string>
+    <string name="fmt_battery">البطارية: %1$d%%</string>
+    <string name="fmt_last_sent">آخر إرسال: %1$s</string>
+    <string name="fmt_success">عدد الإرساليات الناجحة: %1$d</string>
+    <string name="fmt_failure">عدد الإرساليات الفاشلة: %1$d</string>
+    <string name="fmt_service">حالة الخدمة: %1$s</string>
+    <string name="fmt_api">الـ API: %1$s</string>
+
+    <string name="on">تشغيل</string>
+    <string name="off">إيقاف</string>
+    <string name="online">متصل</string>
+    <string name="offline">غير متصل</string>
+    <string name="wifi">Wi-Fi</string>
+    <string name="mobile">بيانات الجوال</string>
+    <string name="unknown_short">غير معروف</string>
+    <string name="running">يعمل</string>
+    <string name="stopped">متوقف</string>
+
+    <!-- Notification -->
+    <string name="notif_title">إرسال موقع العائلة</string>
+    <string name="notif_text">تتبع الموقع قيد التشغيل</string>
+
+    <!-- Background / permissions -->
+    <string name="background_location_title">الموقع في الخلفية</string>
+    <string name="background_location_message">حتى يعمل التتبع عند إغلاق التطبيق، يرجى السماح بالوصول إلى الموقع \"دائمًا\" في الشاشة التالية.</string>
+    <string name="background_location_recommended">يُنصح بتفعيل الوصول للموقع في الخلفية للتتبع المستمر</string>
+    <string name="permission_location_denied">تم رفض إذن الموقع. افتح الإعدادات لتفعيله.</string>
+    <string name="ok">موافق</string>
+    <string name="later">لاحقًا</string>
+    <string name="cancel">إلغاء</string>
+    <string name="open_settings">فتح الإعدادات</string>
+
+    <!-- Device admin -->
+    <string name="device_admin_label">مسؤول جهاز Family Location Sender</string>
+    <string name="device_admin_description">يحمي التطبيق من الحذف بسهولة من قبل الأطفال أو أي مستخدم آخر.</string>
+    <string name="device_admin_explanation">تفعيل صلاحية مسؤول الجهاز يتطلب تعطيلها من إعدادات النظام قبل أن يمكن إلغاء تثبيت التطبيق.</string>
+    <string name="device_admin_warning_title">يُنصح بالحماية</string>
+    <string name="device_admin_warning_body">فعّل ميزة Device Admin حتى لا يتمكن أحد من إلغاء تثبيت التطبيق بسهولة.</string>
+    <string name="enable_device_admin">تفعيل Device Admin</string>
+    <string name="device_admin_already_active">Device Admin مفعّل بالفعل</string>
+    <string name="device_admin_enabled_toast">تم تفعيل Device Admin — التطبيق محمي</string>
+    <string name="device_admin_disabled_toast">تم تعطيل Device Admin — التطبيق لم يعد محميًا</string>
+    <string name="device_admin_disable_warning">تعطيل Device Admin سيزيل الحماية من حذف التطبيق.</string>
+
+    <!-- Settings -->
+    <string name="language">اللغة</string>
+    <string name="english">English</string>
+    <string name="arabic">العربية</string>
+    <string name="change_password">تغيير كلمة المرور</string>
+    <string name="current_password">كلمة المرور الحالية</string>
+    <string name="new_password">كلمة المرور الجديدة</string>
+    <string name="confirm_password">تأكيد كلمة المرور</string>
+    <string name="update_password">تحديث كلمة المرور</string>
+    <string name="password_updated">تم تحديث كلمة المرور</string>
+</resources>
