@@ -64,7 +64,7 @@ class Prefs(context: Context) {
         set(v) = sp.edit().putString(KEY_PROFILE_IMAGE, v).apply()
 
     var familyCode: String
-        get() = sp.getString(KEY_FAMILY_CODE, "") ?: ""
+        get() = sp.getString(KEY_FAMILY_CODE, DEFAULT_FAMILY_CODE) ?: DEFAULT_FAMILY_CODE
         set(v) = sp.edit().putString(KEY_FAMILY_CODE, v).apply()
 
     // ---------------- API ----------------
@@ -163,6 +163,7 @@ class Prefs(context: Context) {
         const val DEFAULT_API_ENDPOINT =
             "https://my-family-my-life-api.onrender.com/api/location/update"
         const val DEFAULT_PASSWORD = "1001"
+        const val DEFAULT_FAMILY_CODE = "1001"
 
         const val INTERVAL_1MIN = "1m"
         const val INTERVAL_3MIN = "3m"

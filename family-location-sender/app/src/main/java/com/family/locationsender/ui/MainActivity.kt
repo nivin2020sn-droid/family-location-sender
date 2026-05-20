@@ -209,6 +209,12 @@ class MainActivity : AppCompatActivity() {
         binding.tvFailure.text = getString(R.string.fmt_failure, prefs.failureCount)
         binding.tvQueue.text = getString(R.string.fmt_queue, queue.size())
 
+        // Family code is the value actually used in every outgoing request.
+        binding.tvFamilyCode.text = getString(
+            R.string.fmt_family_code,
+            if (prefs.familyCode.isBlank()) getString(R.string.api_not_set) else prefs.familyCode
+        )
+
         // Diagnostic info on the last send attempt — visible in status panel.
         val errLine = buildLastErrorLine()
         if (errLine.isNotBlank()) {
@@ -235,8 +241,18 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun onStartClicked() {
-        if (prefs.familyCode.isBlank() || prefs.memberName.isBlank()) {
+        if (prefs.familyCode.isBlank()) {
+            Toast.makeText(this, R.string.family_code_required, Toast.LENGTH_LONG).show()
+            startActivity(Intent(this, SettingsActivity::class.java))
+            return
+        }
+        if (prefs.memberName.isBlank()) {
             Toast.makeText(this, R.string.complete_setup_first, Toast.LENGTH_LONG).show()
+            return
+        }
+        if (prefs.apiEndpoint.isBlank()) {
+            Toast.makeText(this, R.string.api_required, Toast.LENGTH_LONG).show()
+            startActivity(Intent(this, SettingsActivity::class.java))
             return
         }
         // Ask runtime permissions

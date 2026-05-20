@@ -60,6 +60,7 @@
             <TextView android:id="@+id/tvSuccess" style="@style/StatusRow" />
             <TextView android:id="@+id/tvFailure" style="@style/StatusRow" />
             <TextView android:id="@+id/tvQueue" style="@style/StatusRow" />
+            <TextView android:id="@+id/tvFamilyCode" style="@style/StatusRow" />
             <TextView android:id="@+id/tvApi" style="@style/StatusRow" />
             <TextView
                 android:id="@+id/tvLastError"

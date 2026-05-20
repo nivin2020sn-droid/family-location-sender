@@ -61,6 +61,8 @@
     <string name="fmt_service">حالة الخدمة: %1$s</string>
     <string name="fmt_api">الـ API: %1$s</string>
     <string name="fmt_queue">في الانتظار (دون اتصال): %1$d</string>
+    <string name="fmt_family_code">رمز العائلة: %1$s</string>
+    <string name="family_code_required">يرجى إدخال رمز العائلة في الإعدادات قبل البدء</string>
     <string name="api_not_set">غير مضبوط</string>
     <string name="api_required">الرجاء ضبط رابط الـ API من الإعدادات أولًا</string>
 

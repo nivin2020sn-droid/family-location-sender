@@ -61,6 +61,8 @@
     <string name="fmt_service">Service: %1$s</string>
     <string name="fmt_api">API: %1$s</string>
     <string name="fmt_queue">Pending (offline): %1$d</string>
+    <string name="fmt_family_code">Family code: %1$s</string>
+    <string name="family_code_required">Please enter your Family Code in Settings before starting</string>
     <string name="api_not_set">Not configured</string>
     <string name="api_required">Please set the API endpoint in Settings first</string>
 
