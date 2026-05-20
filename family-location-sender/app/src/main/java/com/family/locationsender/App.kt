@@ -42,9 +42,8 @@ class App : Application() {
 
         try {
             inactivityTracker = InactivityTracker(
-                timeoutMs = 60_000L, // 1 minute idle -> lock
-                onTimeout = { safeForceLock() },
-                onBackgrounded = { safeForceLock() }
+                timeoutMs = 3 * 60_000L, // 3 minutes idle -> lock
+                onTimeout = { safeForceLock() }
             )
             registerActivityLifecycleCallbacks(inactivityTracker)
         } catch (t: Throwable) {

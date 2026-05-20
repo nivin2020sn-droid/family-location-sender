@@ -164,6 +164,13 @@ class MainActivity : AppCompatActivity() {
         try { unregisterReceiver(testResultReceiver) } catch (_: Throwable) {}
     }
 
+    /** Every user touch / key press refreshes the 3-minute idle timer. */
+    override fun onUserInteraction() {
+        super.onUserInteraction()
+        (application as? com.family.locationsender.App)
+            ?.inactivityTracker?.touch()
+    }
+
     private fun renderStatus() {
         binding.tvName.text = prefs.memberName.ifBlank { getString(R.string.unknown) }
 

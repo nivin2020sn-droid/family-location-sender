@@ -46,21 +46,31 @@ class SmartLocationStrategy(private val prefs: Prefs) {
     fun buildRequest(): LocationRequest {
         val mode = prefs.updateInterval
         val intervalMs = when (mode) {
+            Prefs.INTERVAL_1SEC -> 1_000L
+            Prefs.INTERVAL_10SEC -> 10_000L
+            Prefs.INTERVAL_30SEC -> 30_000L
             Prefs.INTERVAL_1MIN -> 60_000L
             Prefs.INTERVAL_3MIN -> 3 * 60_000L
             Prefs.INTERVAL_5MIN -> 5 * 60_000L
+            Prefs.INTERVAL_10MIN -> 10 * 60_000L
             Prefs.INTERVAL_15MIN -> 15 * 60_000L
             Prefs.INTERVAL_SMART -> smartInterval()
             else -> smartInterval()
         }
+        // For sub-second / 1-second polls the minimum update interval must be
+        // small or Fused will throttle silently.
+        val minUpdate = maxOf(500L, intervalMs / 2)
         return LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, intervalMs)
-            .setMinUpdateIntervalMillis(intervalMs / 2)
+            .setMinUpdateIntervalMillis(minUpdate)
             .setWaitForAccurateLocation(false)
             .build()
     }
 
     private fun smartInterval(): Long {
         val movingRecently = SystemClock.elapsedRealtime() - lastMovementAt < 5 * 60_000L
+        // Smart mode:
+        //  - moving: every 1 minute (will pick 3 if device is idle / battery-saver)
+        //  - stationary: every 15 minutes (system may stretch to ~30 if dozing)
         return if (movingRecently) 60_000L else 15 * 60_000L
     }
 }

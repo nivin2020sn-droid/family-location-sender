@@ -80,9 +80,13 @@ class SetupActivity : AppCompatActivity() {
 
         val intervals = listOf(
             getString(R.string.interval_smart) to Prefs.INTERVAL_SMART,
+            getString(R.string.interval_1s) to Prefs.INTERVAL_1SEC,
+            getString(R.string.interval_10s) to Prefs.INTERVAL_10SEC,
+            getString(R.string.interval_30s) to Prefs.INTERVAL_30SEC,
             getString(R.string.interval_1m) to Prefs.INTERVAL_1MIN,
             getString(R.string.interval_3m) to Prefs.INTERVAL_3MIN,
             getString(R.string.interval_5m) to Prefs.INTERVAL_5MIN,
+            getString(R.string.interval_10m) to Prefs.INTERVAL_10MIN,
             getString(R.string.interval_15m) to Prefs.INTERVAL_15MIN
         )
         val labels = intervals.map { it.first }
@@ -105,6 +109,13 @@ class SetupActivity : AppCompatActivity() {
             startActivity(Intent(this, LockActivity::class.java))
             finish()
         }
+    }
+
+    /** Every user touch / key press refreshes the 3-minute idle timer. */
+    override fun onUserInteraction() {
+        super.onUserInteraction()
+        (application as? com.family.locationsender.App)
+            ?.inactivityTracker?.touch()
     }
 
     private fun setProfileBitmap(bmp: Bitmap) {

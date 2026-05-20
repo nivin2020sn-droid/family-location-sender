@@ -31,11 +31,15 @@
     <string name="permission_denied">Permission denied</string>
 
     <!-- Update interval -->
-    <string name="update_interval">Send interval</string>
+    <string name="update_interval">Location Send Interval</string>
     <string name="interval_smart">Smart Mode (recommended)</string>
+    <string name="interval_1s">Every 1 second</string>
+    <string name="interval_10s">Every 10 seconds</string>
+    <string name="interval_30s">Every 30 seconds</string>
     <string name="interval_1m">Every 1 minute</string>
     <string name="interval_3m">Every 3 minutes</string>
     <string name="interval_5m">Every 5 minutes</string>
+    <string name="interval_10m">Every 10 minutes</string>
     <string name="interval_15m">Every 15 minutes</string>
 
     <!-- Main dashboard -->

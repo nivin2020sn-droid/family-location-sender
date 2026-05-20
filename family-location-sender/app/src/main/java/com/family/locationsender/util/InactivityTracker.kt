@@ -6,22 +6,30 @@ import android.os.Bundle
 import android.os.SystemClock
 
 /**
- * Tracks foreground inactivity. When the app has not seen any user interaction
- * or activity resume for [timeoutMs], [onTimeout] is invoked. Used to force-lock
- * the UI after 1 minute of idle time.
+ * Tracks foreground inactivity. The session is considered "active" as long as
+ * any user interaction has happened within [timeoutMs]. Going to background or
+ * switching to another app does NOT lock immediately — only a real lack of
+ * interaction for [timeoutMs] does.
  *
- * Also locks immediately when all activities go to background (screen off,
- * another app, recents).
+ * Behaviour:
+ *  - Every call to [touch] (or `onUserInteraction`) refreshes `lastInteractionAt`.
+ *  - While the app is in the foreground, a ticker checks every 5 s whether the
+ *    timeout has elapsed and, if so, fires [onTimeout].
+ *  - While the app is in the background the timer is paused; when the user
+ *    re-enters the app, we compare the wall-clock against `lastInteractionAt`
+ *    and fire [onTimeout] right away if more than [timeoutMs] elapsed.
+ *  - The background location service is completely independent of this and
+ *    keeps running.
  */
 class InactivityTracker(
     private val timeoutMs: Long,
-    private val onTimeout: () -> Unit,
-    private val onBackgrounded: () -> Unit
+    private val onTimeout: () -> Unit
 ) : Application.ActivityLifecycleCallbacks {
 
     private var startedActivities = 0
-    private var lastInteractionAt = SystemClock.elapsedRealtime()
+    @Volatile private var lastInteractionAt = SystemClock.elapsedRealtime()
     private val handler = android.os.Handler(android.os.Looper.getMainLooper())
+
     private val tickRunnable = object : Runnable {
         override fun run() {
             if (startedActivities > 0) {
@@ -35,6 +43,7 @@ class InactivityTracker(
         }
     }
 
+    /** Refresh the last-interaction timestamp. */
     fun touch() {
         lastInteractionAt = SystemClock.elapsedRealtime()
     }
@@ -42,21 +51,34 @@ class InactivityTracker(
     override fun onActivityStarted(activity: Activity) {
         startedActivities++
         if (startedActivities == 1) {
-            // Just came to foreground
-            touch()
-            handler.removeCallbacks(tickRunnable)
-            handler.postDelayed(tickRunnable, 5_000)
+            // App just came back to the foreground. If we've been idle longer
+            // than the timeout while in background, fire onTimeout NOW so the
+            // password screen comes up. Otherwise resume the foreground ticker.
+            val idle = SystemClock.elapsedRealtime() - lastInteractionAt
+            if (idle >= timeoutMs) {
+                onTimeout()
+            } else {
+                handler.removeCallbacks(tickRunnable)
+                handler.postDelayed(tickRunnable, 5_000)
+            }
         }
     }
 
-    override fun onActivityResumed(activity: Activity) { touch() }
+    override fun onActivityResumed(activity: Activity) {
+        // Treat a resume as user activity too so navigation between our own
+        // screens doesn't accidentally trigger a lock.
+        touch()
+    }
+
     override fun onActivityPaused(activity: Activity) {}
+
     override fun onActivityStopped(activity: Activity) {
         startedActivities--
         if (startedActivities <= 0) {
             startedActivities = 0
+            // Stop the foreground ticker, but DO NOT lock here — we only lock
+            // after [timeoutMs] of true inactivity (checked on re-entry).
             handler.removeCallbacks(tickRunnable)
-            onBackgrounded()
         }
     }
 

@@ -31,11 +31,15 @@
     <string name="permission_denied">تم رفض الإذن</string>
 
     <!-- Update interval -->
-    <string name="update_interval">فترة الإرسال</string>
+    <string name="update_interval">فترة إرسال الموقع</string>
     <string name="interval_smart">الوضع الذكي (موصى به)</string>
+    <string name="interval_1s">كل ثانية</string>
+    <string name="interval_10s">كل 10 ثوانٍ</string>
+    <string name="interval_30s">كل 30 ثانية</string>
     <string name="interval_1m">كل دقيقة</string>
     <string name="interval_3m">كل 3 دقائق</string>
     <string name="interval_5m">كل 5 دقائق</string>
+    <string name="interval_10m">كل 10 دقائق</string>
     <string name="interval_15m">كل 15 دقيقة</string>
 
     <!-- Main dashboard -->

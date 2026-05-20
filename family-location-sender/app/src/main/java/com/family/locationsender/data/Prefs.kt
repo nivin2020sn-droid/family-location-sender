@@ -165,9 +165,13 @@ class Prefs(context: Context) {
         const val DEFAULT_PASSWORD = "1001"
         const val DEFAULT_FAMILY_CODE = "1001"
 
+        const val INTERVAL_1SEC = "1s"
+        const val INTERVAL_10SEC = "10s"
+        const val INTERVAL_30SEC = "30s"
         const val INTERVAL_1MIN = "1m"
         const val INTERVAL_3MIN = "3m"
         const val INTERVAL_5MIN = "5m"
+        const val INTERVAL_10MIN = "10m"
         const val INTERVAL_15MIN = "15m"
         const val INTERVAL_SMART = "smart"
 
