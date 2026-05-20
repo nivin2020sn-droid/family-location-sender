@@ -63,10 +63,19 @@ independent from the *My Family My Life* web project.
 ```bash
 cd family-location-sender
 echo "sdk.dir=$ANDROID_HOME" > local.properties
-gradle wrapper --gradle-version 8.7 --distribution-type bin
 ./gradlew assembleDebug
 # → app/build/outputs/apk/debug/app-debug.apk
 ```
+> The Gradle wrapper (`gradlew` + `gradle/wrapper/*`) is now committed to the
+> repo, so no `gradle wrapper` bootstrap step is required.
+
+## CI Build Verification (June 2025)
+- Verified locally that BOTH `./gradlew :app:assembleDebug` and
+  `./gradlew :app:assembleRelease` produce APKs:
+  - `app/build/outputs/apk/debug/app-debug.apk` (~8.9 MB)
+  - `app/build/outputs/apk/release/app-release-unsigned.apk` (~7.1 MB)
+- GitHub Actions workflow `/app/.github/workflows/build.yml` now uses the
+  committed `./gradlew` (not system `gradle`) for reproducibility.
 
 ## Default values
 | Setting | Default |

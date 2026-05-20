@@ -90,5 +90,8 @@ dependencies {
     // Image loading (for profile picture)
     implementation("io.coil-kt:coil:2.6.0")
 
+    // EXIF metadata reader (for auto-rotating profile pictures)
+    implementation("androidx.exifinterface:exifinterface:1.3.7")
+
     testImplementation("junit:junit:4.13.2")
 }

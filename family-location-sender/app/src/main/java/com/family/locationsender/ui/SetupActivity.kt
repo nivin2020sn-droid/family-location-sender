@@ -20,6 +20,7 @@ import com.family.locationsender.R
 import com.family.locationsender.data.Prefs
 import com.family.locationsender.databinding.ActivitySetupBinding
 import com.family.locationsender.util.LocaleHelper
+import com.family.locationsender.util.ImageUtils
 import com.family.locationsender.util.SessionState
 import java.io.ByteArrayOutputStream
 
@@ -42,10 +43,9 @@ class SetupActivity : AppCompatActivity() {
     ) { uri: Uri? ->
         uri ?: return@registerForActivityResult
         try {
-            contentResolver.openInputStream(uri).use { input ->
-                val bmp = BitmapFactory.decodeStream(input) ?: return@use
-                setProfileBitmap(bmp)
-            }
+            val bmp = ImageUtils.decodeOriented(this, uri)
+            if (bmp != null) setProfileBitmap(bmp)
+            else Toast.makeText(this, R.string.error_load_image, Toast.LENGTH_SHORT).show()
         } catch (e: Exception) {
             Toast.makeText(this, R.string.error_load_image, Toast.LENGTH_SHORT).show()
         }

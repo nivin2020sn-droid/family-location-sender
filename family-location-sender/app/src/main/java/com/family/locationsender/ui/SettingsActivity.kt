@@ -19,6 +19,7 @@ import com.family.locationsender.databinding.ActivitySettingsBinding
 import com.family.locationsender.receiver.AppDeviceAdminReceiver
 import com.family.locationsender.service.LocationForegroundService
 import com.family.locationsender.util.LocaleHelper
+import com.family.locationsender.util.ImageUtils
 import com.family.locationsender.util.SessionState
 import java.io.ByteArrayOutputStream
 
@@ -42,10 +43,8 @@ class SettingsActivity : AppCompatActivity() {
     ) { uri: Uri? ->
         uri ?: return@registerForActivityResult
         try {
-            contentResolver.openInputStream(uri).use { input ->
-                val bmp = BitmapFactory.decodeStream(input) ?: return@use
-                setProfileBitmap(bmp)
-            }
+            val bmp = ImageUtils.decodeOriented(this, uri)
+            if (bmp != null) setProfileBitmap(bmp)
         } catch (_: Exception) {}
     }
 

@@ -32,27 +32,25 @@ jobs:
         with:
           packages: 'platform-tools platforms;android-34 build-tools;34.0.0'
 
-      - name: Set up Gradle 8.7
-        uses: gradle/actions/setup-gradle@v3
-        with:
-          gradle-version: '8.7'
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
 
       - name: Print environment
         run: |
           echo "JAVA_HOME=$JAVA_HOME"
           echo "ANDROID_HOME=$ANDROID_HOME"
           java -version
-          gradle --version | head -5
+          ./gradlew --version | head -10
           echo "--- Project files ---"
           ls -la
           echo "--- Source tree ---"
           find app/src -type d | head -30
 
       - name: Build debug APK
-        run: gradle :app:assembleDebug --no-daemon --stacktrace --warning-mode=all
+        run: ./gradlew :app:assembleDebug --no-daemon --stacktrace --warning-mode=summary
 
       - name: Build release APK (unsigned)
-        run: gradle :app:assembleRelease --no-daemon --stacktrace --warning-mode=all
+        run: ./gradlew :app:assembleRelease --no-daemon --stacktrace --warning-mode=summary
         continue-on-error: true
 
       - name: List ALL generated APKs
@@ -60,9 +58,6 @@ jobs:
         run: |
           echo "=========== Searching for APKs under app/build/ ==========="
           find app/build -name "*.apk" -type f 2>/dev/null || true
-          echo ""
-          echo "=========== Searching for APKs anywhere in project ==========="
-          find . -name "*.apk" -type f 2>/dev/null || true
           echo ""
           echo "=========== Contents of app/build/outputs ==========="
           ls -laR app/build/outputs 2>/dev/null || echo "  (no outputs dir)"
