@@ -9,19 +9,32 @@ android {
 
     defaultConfig {
         applicationId = "com.family.locationsender"
-        minSdk = 24
+        // Lowered from 24 → 21 so the app installs on the cheap Android 5.1 /
+        // 6.0 car head units that were silently rejecting the APK.
+        minSdk = 21
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.1.0"
 
         vectorDrawables {
             useSupportLibrary = true
+        }
+
+        // Build a fat APK containing native libs for BOTH 32-bit (older head
+        // units, cheap car stereos) and 64-bit (modern phones / tablets)
+        // ARM devices. Without armeabi-v7a the install hangs / silently
+        // fails on legacy car head units.
+        ndk {
+            abiFilters += listOf("armeabi-v7a", "arm64-v8a")
         }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
+            // Sign the release build with the standard debug keystore so we
+            // produce a real, installable APK (not "-unsigned.apk").
+            signingConfig = signingConfigs.getByName("debug")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -43,6 +56,9 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        // minSdk = 21 is the cut-off for stream-API + java.time desugaring.
+        // We don't need core-library desugaring right now, so leave it off.
+        isCoreLibraryDesugaringEnabled = false
     }
     kotlinOptions {
         jvmTarget = "17"
