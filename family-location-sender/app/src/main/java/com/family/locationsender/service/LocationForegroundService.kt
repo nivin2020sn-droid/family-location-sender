@@ -59,6 +59,41 @@ class LocationForegroundService : Service() {
     private var connectivityManager: ConnectivityManager? = null
     private var networkCallback: ConnectivityManager.NetworkCallback? = null
 
+    /** Main-thread handler for the self-heal watchdog. */
+    private val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
+
+    /**
+     * Self-heal watchdog. Runs every 60 s. If tracking is supposed to be
+     * active but no LocationCallback is registered (or nothing has been
+     * attempted for > 2 minutes), it re-runs the same logic as pressing
+     * the Start Tracking button — without any user interaction.
+     */
+    private val watchdog = object : Runnable {
+        override fun run() {
+            try {
+                if (prefs.trackingEnabled) {
+                    val now = System.currentTimeMillis()
+                    val sinceLast = if (prefs.lastAttemptAt > 0)
+                        now - prefs.lastAttemptAt else Long.MAX_VALUE
+                    val unhealthy = callback == null || sinceLast > 2 * 60_000L
+                    if (unhealthy) {
+                        Log.w(TAG, "Watchdog: tracking unhealthy (callback=${callback != null}, " +
+                                "sinceLastMs=$sinceLast) — restarting updates")
+                        startUpdates()
+                        // Force a one-off send so we don't wait for the next
+                        // location callback to know we're healthy again.
+                        scope.launch { sendOnce() }
+                        // Also try to drain any queued offline payloads.
+                        scope.launch { flushQueue() }
+                    }
+                }
+            } catch (t: Throwable) {
+                Log.e(TAG, "Watchdog tick failed", t)
+            }
+            mainHandler.postDelayed(this, 60_000L)
+        }
+    }
+
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onCreate() {
@@ -68,6 +103,10 @@ class LocationForegroundService : Service() {
         fused = LocationServices.getFusedLocationProviderClient(this)
         strategy = SmartLocationStrategy(prefs)
         registerConnectivityListener()
+        // Start the self-heal watchdog. It is cheap (one tick / minute) and
+        // only takes action when tracking is actually meant to be running.
+        mainHandler.removeCallbacks(watchdog)
+        mainHandler.postDelayed(watchdog, 60_000L)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -78,6 +117,7 @@ class LocationForegroundService : Service() {
             ACTION_STOP -> {
                 prefs.trackingEnabled = false
                 stopUpdates()
+                mainHandler.removeCallbacks(watchdog)
                 stopForeground(STOP_FOREGROUND_REMOVE)
                 stopSelf()
                 return START_NOT_STICKY
@@ -295,6 +335,7 @@ class LocationForegroundService : Service() {
     override fun onDestroy() {
         stopUpdates()
         unregisterConnectivityListener()
+        mainHandler.removeCallbacks(watchdog)
         scope.cancel()
         super.onDestroy()
     }

@@ -59,6 +59,7 @@
     <string name="fmt_net">Internet: %1$s</string>
     <string name="fmt_conn">Connection: %1$s</string>
     <string name="fmt_battery">Battery: %1$d%%</string>
+    <string name="fmt_car_voltage">Car Voltage: %1$s</string>
     <string name="fmt_last_sent">Last sent: %1$s</string>
     <string name="fmt_success">Successful sends: %1$d</string>
     <string name="fmt_failure">Failed sends: %1$d</string>

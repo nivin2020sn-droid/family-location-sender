@@ -202,7 +202,7 @@ class MainActivity : AppCompatActivity() {
             })
         )
 
-        binding.tvBattery.text = getString(R.string.fmt_battery, DeviceUtils.batteryPercent(this))
+        binding.tvBattery.text = getString(R.string.fmt_car_voltage, DeviceUtils.carVoltageLabel(this))
 
         val last = prefs.lastSendTimestamp
         binding.tvLastSent.text = getString(

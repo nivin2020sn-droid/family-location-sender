@@ -59,6 +59,7 @@
     <string name="fmt_net">الإنترنت: %1$s</string>
     <string name="fmt_conn">نوع الاتصال: %1$s</string>
     <string name="fmt_battery">البطارية: %1$d%%</string>
+    <string name="fmt_car_voltage">فولتية السيارة: %1$s</string>
     <string name="fmt_last_sent">آخر إرسال: %1$s</string>
     <string name="fmt_success">عدد الإرساليات الناجحة: %1$d</string>
     <string name="fmt_failure">عدد الإرساليات الفاشلة: %1$d</string>
