@@ -299,6 +299,9 @@ class MainActivity : AppCompatActivity() {
     private fun startTrackingService() {
         prefs.trackingEnabled = true
         LocationForegroundService.start(this)
+        // Also arm the external keepalive alarm so the service is resurrected
+        // every minute on cheap car head units that aggressively kill apps.
+        com.family.locationsender.receiver.KeepaliveAlarm.schedule(this)
         renderStatus()
         // Suggest disabling battery optimization for reliable background work
         requestIgnoreBatteryOptimizations()
@@ -307,6 +310,8 @@ class MainActivity : AppCompatActivity() {
     private fun stopTracking() {
         prefs.trackingEnabled = false
         LocationForegroundService.stop(this)
+        // Cancel keepalive so it doesn't keep resurrecting the service.
+        com.family.locationsender.receiver.KeepaliveAlarm.cancel(this)
         renderStatus()
     }
 

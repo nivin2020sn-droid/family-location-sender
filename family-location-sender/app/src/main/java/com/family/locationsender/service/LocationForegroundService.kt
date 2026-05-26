@@ -98,6 +98,7 @@ class LocationForegroundService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        Log.i(TAG, "Service onCreate — initialising prefs / fused / strategy / watchdog")
         prefs = Prefs.get(this)
         queue = OfflineQueue.get(this)
         fused = LocationServices.getFusedLocationProviderClient(this)
@@ -110,19 +111,33 @@ class LocationForegroundService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        val act = intent?.action
+        Log.i(TAG, "onStartCommand action='$act' trackingEnabled=${prefs.trackingEnabled}")
         startInForeground()
-        when (intent?.action) {
+        when (act) {
             ACTION_TEST_SEND -> scope.launch { sendOnce(isTest = true) }
             ACTION_FLUSH_QUEUE -> scope.launch { flushQueue() }
             ACTION_STOP -> {
+                Log.i(TAG, "Stop requested — disabling tracking + cancelling alarms")
                 prefs.trackingEnabled = false
                 stopUpdates()
                 mainHandler.removeCallbacks(watchdog)
+                com.family.locationsender.receiver.KeepaliveAlarm.cancel(this)
                 stopForeground(STOP_FOREGROUND_REMOVE)
                 stopSelf()
                 return START_NOT_STICKY
             }
-            else -> startUpdates()
+            else -> {
+                Log.i(TAG, "Start requested — running same logic as Start Tracking button")
+                startUpdates()
+                // Seed: try to grab the cached last-known location immediately so
+                // we don't have to wait for the first Fused callback after boot.
+                scope.launch { sendOnce() }
+                scope.launch { flushQueue() }
+                // Make sure the external keepalive keeps the service alive even
+                // if the OEM kill-policy nukes it.
+                com.family.locationsender.receiver.KeepaliveAlarm.schedule(this)
+            }
         }
         return START_STICKY
     }
@@ -163,21 +178,36 @@ class LocationForegroundService : Service() {
     }
 
     private fun startUpdates() {
-        if (!hasLocationPermission()) return
+        if (!hasLocationPermission()) {
+            Log.e(TAG, "startUpdates: ACCESS_FINE/COARSE_LOCATION permission missing — cannot subscribe")
+            return
+        }
         prefs.trackingEnabled = true
         stopUpdates()
+        val request = strategy.buildRequest()
+        Log.i(TAG, "Location tracking started — interval=${request.intervalMillis}ms " +
+                "minUpdate=${request.minUpdateIntervalMillis}ms")
         val cb = object : LocationCallback() {
+            private var firstFix = true
             override fun onLocationResult(result: LocationResult) {
                 val loc = result.lastLocation ?: return
+                if (firstFix) {
+                    Log.i(TAG, "First location fix after subscribe: ${loc.latitude},${loc.longitude} " +
+                            "acc=${loc.accuracy}m")
+                    firstFix = false
+                }
                 strategy.onNewLocation(loc)
                 scope.launch { sendLocation(loc) }
             }
         }
         callback = cb
         try {
-            fused.requestLocationUpdates(strategy.buildRequest(), cb, Looper.getMainLooper())
-        } catch (_: SecurityException) {
-            // permission revoked
+            fused.requestLocationUpdates(request, cb, Looper.getMainLooper())
+            Log.i(TAG, "Send loop started (Fused subscription registered)")
+        } catch (se: SecurityException) {
+            Log.e(TAG, "requestLocationUpdates threw SecurityException", se)
+        } catch (t: Throwable) {
+            Log.e(TAG, "requestLocationUpdates failed", t)
         }
     }
 
@@ -246,6 +276,7 @@ class LocationForegroundService : Service() {
         recordResult(result.httpStatus, result.body, result.errorMessage)
 
         if (result.success) {
+            Log.i(TAG, "First location sent successfully — HTTP ${result.httpStatus}")
             prefs.incrementSuccess()
             prefs.lastSendTimestamp = payload.timestamp
             flushQueue()
