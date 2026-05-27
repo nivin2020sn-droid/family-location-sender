@@ -151,6 +151,33 @@ class Prefs(context: Context) {
         get() = sp.getString(KEY_LANGUAGE, LANG_EN) ?: LANG_EN
         set(v) = sp.edit().putString(KEY_LANGUAGE, v).apply()
 
+    // ---------------- Manual Location Override ----------------
+    /** When true, the service ignores real GPS and uses the manual coordinates. */
+    var manualLocationMode: Boolean
+        get() = sp.getBoolean(KEY_MANUAL_MODE, false)
+        set(v) = sp.edit().putBoolean(KEY_MANUAL_MODE, v).apply()
+
+    /** Manual latitude (-90..90). NaN if unset. */
+    var manualLat: Double
+        get() {
+            val raw = sp.getString(KEY_MANUAL_LAT, null) ?: return Double.NaN
+            return raw.toDoubleOrNull() ?: Double.NaN
+        }
+        set(v) = sp.edit().putString(KEY_MANUAL_LAT, v.toString()).apply()
+
+    /** Manual longitude (-180..180). NaN if unset. */
+    var manualLng: Double
+        get() {
+            val raw = sp.getString(KEY_MANUAL_LNG, null) ?: return Double.NaN
+            return raw.toDoubleOrNull() ?: Double.NaN
+        }
+        set(v) = sp.edit().putString(KEY_MANUAL_LNG, v.toString()).apply()
+
+    /** Manual accuracy in metres. 0 if unset. */
+    var manualAccuracy: Float
+        get() = sp.getFloat(KEY_MANUAL_ACC, 0f)
+        set(v) = sp.edit().putFloat(KEY_MANUAL_ACC, v).apply()
+
     // ---------------- Helpers ----------------
     private fun sha256(input: String): String {
         val bytes = MessageDigest.getInstance("SHA-256").digest(input.toByteArray())
@@ -195,6 +222,10 @@ class Prefs(context: Context) {
         private const val KEY_LAST_ERR = "last_err"
         private const val KEY_LAST_ATTEMPT_TS = "last_attempt_ts"
         private const val KEY_LANGUAGE = "language"
+        private const val KEY_MANUAL_MODE = "manual_mode"
+        private const val KEY_MANUAL_LAT = "manual_lat"
+        private const val KEY_MANUAL_LNG = "manual_lng"
+        private const val KEY_MANUAL_ACC = "manual_acc"
 
         @Volatile private var INSTANCE: Prefs? = null
         fun get(context: Context): Prefs =

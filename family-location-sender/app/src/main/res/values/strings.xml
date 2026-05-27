@@ -121,4 +121,20 @@
     <string name="confirm_password">Confirm password</string>
     <string name="update_password">Update password</string>
     <string name="password_updated">Password updated</string>
+
+    <!-- Manual Location Override -->
+    <string name="manual_location_section">Manual Location</string>
+    <string name="manual_location_hint">Override real GPS with coordinates you type in below. Useful for testing or when GPS is unavailable.</string>
+    <string name="enable_manual_mode">Enable Manual Location Mode</string>
+    <string name="disable_manual_mode">Disable Manual Mode (use real GPS)</string>
+    <string name="manual_lat">Latitude (-90 to 90)</string>
+    <string name="manual_lng">Longitude (-180 to 180)</string>
+    <string name="manual_acc">Accuracy in metres (optional)</string>
+    <string name="send_manual_location">Send Manual Location now</string>
+    <string name="manual_invalid_lat">Latitude must be between -90 and 90</string>
+    <string name="manual_invalid_lng">Longitude must be between -180 and 180</string>
+    <string name="manual_required">Enter both latitude and longitude first</string>
+    <string name="manual_saved">Manual coordinates saved</string>
+    <string name="manual_mode_on">Manual Location Mode is now ON — using your coordinates</string>
+    <string name="manual_mode_off">Manual Location Mode is now OFF — using real GPS</string>
 </resources>

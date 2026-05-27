@@ -117,6 +117,7 @@ class LocationForegroundService : Service() {
         when (act) {
             ACTION_TEST_SEND -> scope.launch { sendOnce(isTest = true) }
             ACTION_FLUSH_QUEUE -> scope.launch { flushQueue() }
+            ACTION_SEND_MANUAL -> scope.launch { sendManualOnce(isTest = true) }
             ACTION_STOP -> {
                 Log.i(TAG, "Stop requested — disabling tracking + cancelling alarms")
                 prefs.trackingEnabled = false
@@ -234,6 +235,39 @@ class LocationForegroundService : Service() {
         }
     }
 
+    /**
+     * Build a payload directly from the user-entered manual lat/lng/accuracy
+     * stored in Prefs and POST it once. Used by the "Send Manual Location"
+     * button in Settings. Does NOT depend on GPS at all.
+     */
+    private suspend fun sendManualOnce(isTest: Boolean = false) {
+        val lat = prefs.manualLat
+        val lng = prefs.manualLng
+        if (lat.isNaN() || lng.isNaN() || lat !in -90.0..90.0 || lng !in -180.0..180.0) {
+            if (isTest) broadcastTestResult(
+                0, "",
+                "Manual coordinates are missing or out of range (lat -90..90, lng -180..180)"
+            )
+            return
+        }
+        // Synthesize an Android Location so we reuse the same JSON path.
+        val loc = Location("manual").apply {
+            latitude = lat
+            longitude = lng
+            accuracy = if (prefs.manualAccuracy > 0f) prefs.manualAccuracy else 1f
+            time = System.currentTimeMillis()
+        }
+        // Force the override branch regardless of the toggle so the user can
+        // hit "Send Manual Location" once without enabling the mode globally.
+        val wasManual = prefs.manualLocationMode
+        prefs.manualLocationMode = true
+        try {
+            sendLocation(loc, isTest)
+        } finally {
+            prefs.manualLocationMode = wasManual
+        }
+    }
+
     private suspend fun sendLocation(loc: Location, isTest: Boolean = false) {
         if (prefs.apiEndpoint.isBlank()) {
             if (isTest) broadcastTestResult(0, "", "API endpoint is empty — set it in Settings")
@@ -244,6 +278,21 @@ class LocationForegroundService : Service() {
             return
         }
 
+        // ---- Manual Location Override -------------------------------------
+        // If the user has enabled Manual Location Mode, replace the GPS
+        // coordinates with the saved manual lat/lng/accuracy and tag the
+        // payload's `locationSource` as "manual". Tracking pipeline,
+        // timestamps, family code, profile image, JSON shape — all unchanged.
+        val manual = prefs.manualLocationMode &&
+                prefs.manualLat in -90.0..90.0 &&
+                prefs.manualLng in -180.0..180.0 &&
+                !prefs.manualLat.isNaN() && !prefs.manualLng.isNaN()
+        val effLat = if (manual) prefs.manualLat else loc.latitude
+        val effLng = if (manual) prefs.manualLng else loc.longitude
+        val effAcc = if (manual) prefs.manualAccuracy else loc.accuracy
+        val effSpeed = if (manual) 0f else if (loc.hasSpeed()) loc.speed else 0f
+        val source = if (manual) "manual" else "gps"
+
         val net = DeviceUtils.networkInfo(this)
         val payload = LocationPayload(
             familyCode = prefs.familyCode,
@@ -251,15 +300,16 @@ class LocationForegroundService : Service() {
             memberName = prefs.memberName,
             profileImage = prefs.profileImage,
             deviceId = prefs.deviceId,
-            latitude = loc.latitude,
-            longitude = loc.longitude,
-            accuracy = loc.accuracy,
-            speed = if (loc.hasSpeed()) loc.speed else 0f,
+            latitude = effLat,
+            longitude = effLng,
+            accuracy = effAcc,
+            speed = effSpeed,
             battery = DeviceUtils.batteryPercent(this),
             timestamp = System.currentTimeMillis(),
             trackingStatus = if (prefs.trackingEnabled) "active" else "stopped",
             networkStatus = if (net.online) "online" else "offline",
-            connectionType = net.type
+            connectionType = net.type,
+            locationSource = source
         )
 
         if (!net.online) {
@@ -376,6 +426,7 @@ class LocationForegroundService : Service() {
         const val ACTION_STOP = "com.family.locationsender.action.STOP"
         const val ACTION_TEST_SEND = "com.family.locationsender.action.TEST_SEND"
         const val ACTION_FLUSH_QUEUE = "com.family.locationsender.action.FLUSH_QUEUE"
+        const val ACTION_SEND_MANUAL = "com.family.locationsender.action.SEND_MANUAL"
 
         // Broadcast emitted after a Test Send so the UI can show a dialog.
         const val ACTION_TEST_RESULT = "com.family.locationsender.action.TEST_RESULT"
@@ -403,6 +454,12 @@ class LocationForegroundService : Service() {
 
         fun flushQueue(ctx: Context) {
             val i = Intent(ctx, LocationForegroundService::class.java).setAction(ACTION_FLUSH_QUEUE)
+            ContextCompat.startForegroundService(ctx, i)
+        }
+
+        /** Fire-and-forget: POST the saved manual coordinates once. */
+        fun sendManual(ctx: Context) {
+            val i = Intent(ctx, LocationForegroundService::class.java).setAction(ACTION_SEND_MANUAL)
             ContextCompat.startForegroundService(ctx, i)
         }
     }

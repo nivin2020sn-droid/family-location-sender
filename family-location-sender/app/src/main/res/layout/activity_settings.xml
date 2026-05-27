@@ -211,6 +211,90 @@
             android:text="@string/enable_device_admin"
             style="@style/Widget.Material3.Button.OutlinedButton"/>
 
+        <!-- =============== Manual Location Override =============== -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="20dp"
+            android:background="@color/divider"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/manual_location_section"
+            android:textColor="@color/text_primary"
+            android:textSize="18sp"
+            android:fontFamily="sans-serif-medium"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="@string/manual_location_hint"
+            android:textColor="@color/text_secondary"
+            android:textSize="13sp"/>
+
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/swManualMode"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="@string/enable_manual_mode"/>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:hint="@string/manual_lat">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etManualLat"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="numberSigned|numberDecimal"/>
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:hint="@string/manual_lng">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etManualLng"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="numberSigned|numberDecimal"/>
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:hint="@string/manual_acc">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etManualAcc"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="numberDecimal"/>
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSendManual"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="10dp"
+            android:text="@string/send_manual_location"
+            style="@style/Widget.Material3.Button.TonalButton"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnDisableManual"
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:layout_marginTop="6dp"
+            android:text="@string/disable_manual_mode"
+            style="@style/Widget.Material3.Button.OutlinedButton"/>
+        <!-- =============== /Manual Location Override =============== -->
+
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnSave"
             android:layout_width="match_parent"

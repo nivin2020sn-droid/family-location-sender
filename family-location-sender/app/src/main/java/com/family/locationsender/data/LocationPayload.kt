@@ -33,7 +33,8 @@ data class LocationPayload(
     val timestamp: Long,        // epoch millis, converted to ISO-8601 in toJson()
     val trackingStatus: String, // "active" | "stopped"
     val networkStatus: String,  // "online" | "offline"
-    val connectionType: String  // "wifi" | "mobile" | "unknown"
+    val connectionType: String, // "wifi" | "mobile" | "unknown"
+    val locationSource: String = "gps" // "gps" | "manual"
 ) {
 
     fun toJson(): String {
@@ -54,6 +55,9 @@ data class LocationPayload(
         obj.put("trackingStatus", trackingStatus)
         obj.put("networkStatus", networkStatus)
         obj.put("connectionType", connectionType)
+        // New field: lets the server tell GPS vs manual override payloads
+        // apart without changing any other part of the schema.
+        obj.put("locationSource", locationSource)
         return obj.toString()
     }
 

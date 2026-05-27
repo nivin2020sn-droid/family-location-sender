@@ -98,6 +98,67 @@ class SettingsActivity : AppCompatActivity() {
         binding.btnChangePassword.setOnClickListener { changePassword() }
         binding.btnSave.setOnClickListener { save(intervals) }
         binding.btnEnableAdmin.setOnClickListener { enableDeviceAdmin() }
+
+        // ---- Manual Location Override ----
+        binding.swManualMode.isChecked = prefs.manualLocationMode
+        if (!prefs.manualLat.isNaN()) binding.etManualLat.setText(prefs.manualLat.toString())
+        if (!prefs.manualLng.isNaN()) binding.etManualLng.setText(prefs.manualLng.toString())
+        if (prefs.manualAccuracy > 0f) binding.etManualAcc.setText(prefs.manualAccuracy.toString())
+
+        binding.swManualMode.setOnCheckedChangeListener { _, isChecked ->
+            // Persist coordinates first (so the toggle reflects what user typed).
+            if (!persistManualInputs(silent = isChecked)) {
+                // Bad input: revert the switch
+                binding.swManualMode.isChecked = false
+                return@setOnCheckedChangeListener
+            }
+            prefs.manualLocationMode = isChecked
+            Toast.makeText(
+                this,
+                if (isChecked) R.string.manual_mode_on else R.string.manual_mode_off,
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+
+        binding.btnSendManual.setOnClickListener {
+            if (!persistManualInputs(silent = false)) return@setOnClickListener
+            LocationForegroundService.sendManual(this)
+            Toast.makeText(this, R.string.send_manual_location, Toast.LENGTH_SHORT).show()
+        }
+
+        binding.btnDisableManual.setOnClickListener {
+            prefs.manualLocationMode = false
+            binding.swManualMode.isChecked = false
+            Toast.makeText(this, R.string.manual_mode_off, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    /**
+     * Validate and persist the lat/lng/accuracy fields. Returns false if the
+     * input is invalid (and surfaces an inline error / toast).
+     */
+    private fun persistManualInputs(silent: Boolean): Boolean {
+        val latStr = binding.etManualLat.text?.toString()?.trim().orEmpty()
+        val lngStr = binding.etManualLng.text?.toString()?.trim().orEmpty()
+        val accStr = binding.etManualAcc.text?.toString()?.trim().orEmpty()
+
+        if (latStr.isEmpty() || lngStr.isEmpty()) {
+            if (!silent) Toast.makeText(this, R.string.manual_required, Toast.LENGTH_SHORT).show()
+            return false
+        }
+        val lat = latStr.toDoubleOrNull()
+        val lng = lngStr.toDoubleOrNull()
+        if (lat == null || lat !in -90.0..90.0) {
+            binding.etManualLat.error = getString(R.string.manual_invalid_lat); return false
+        }
+        if (lng == null || lng !in -180.0..180.0) {
+            binding.etManualLng.error = getString(R.string.manual_invalid_lng); return false
+        }
+        prefs.manualLat = lat
+        prefs.manualLng = lng
+        prefs.manualAccuracy = accStr.toFloatOrNull()?.coerceAtLeast(0f) ?: 0f
+        if (!silent) Toast.makeText(this, R.string.manual_saved, Toast.LENGTH_SHORT).show()
+        return true
     }
 
     override fun onResume() {
