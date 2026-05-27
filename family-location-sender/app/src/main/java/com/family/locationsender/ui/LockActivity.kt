@@ -79,6 +79,17 @@ class LockActivity : AppCompatActivity() {
                     Log.e(TAG, "Language switch failed", t)
                 }
             }
+
+            // Critical for car head units that don't deliver BOOT_COMPLETED:
+            // when the lock screen is shown (because the car booted and the
+            // launcher re-opened our app), trigger the exact same Start
+            // Tracking pipeline so we don't sit idle until the user unlocks.
+            try {
+                (application as? com.family.locationsender.App)
+                    ?.autoResumeTrackingIfNeeded(reason = "LockActivity.onCreate")
+            } catch (t: Throwable) {
+                Log.e(TAG, "autoResumeTrackingIfNeeded(Lock) failed", t)
+            }
         } catch (t: Throwable) {
             Log.e(TAG, "LockActivity onCreate setup failed", t)
             Toast.makeText(this, "Startup error — see logcat", Toast.LENGTH_LONG).show()
